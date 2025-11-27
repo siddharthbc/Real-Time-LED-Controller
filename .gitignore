@@ -1,0 +1,52 @@
+# Keil MDK/uVision Files
+*.uvguix.*
+*.uvoptx
+*.bak
+*.dep
+*.d
+*.crf
+*.htm
+*.i
+*.lnp
+*.lst
+*.map
+*.o
+*.obj
+*.axf
+*.elf
+*.hex
+*.bin
+*.lib
+*.a
+*.sct
+
+# Build Directories
+Objects/
+Listings/
+DebugConfig/
+build/
+
+# IDE specific files
+*.dwf3work
+EventRecorderStub.scvd
+Old_Project_Base.uvoptx_old
+pemicro_connection_settings.ini
+
+# Backup files
+*.bak
+*.0000
+*.0001
+*.old
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Debug files
+*.log
