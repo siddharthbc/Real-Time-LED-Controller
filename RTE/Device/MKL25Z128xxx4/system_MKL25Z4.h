@@ -105,9 +105,16 @@ extern "C" {
 
 #include <stdint.h>
 
-
-#ifndef DISABLE_WDOG
-  #define DISABLE_WDOG                 1
+// COP Watchdog control - set DISABLE_WDOG to 0 to allow COP usage
+// When ENABLE_COP_WATCHDOG is defined and set to 1 in config.h, 
+// we want to keep COP enabled (don't disable it in SystemInit)
+#include "config.h"
+#if ENABLE_COP_WATCHDOG
+  #define DISABLE_WDOG                 0   // Don't disable COP - we'll configure it in main()
+#else
+  #ifndef DISABLE_WDOG
+    #define DISABLE_WDOG               1   // Disable COP (default behavior)
+  #endif
 #endif
 
 

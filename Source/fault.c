@@ -45,7 +45,7 @@ Fault_Test_E Fault_Tests[] = {
 	TR_PID_FX_Gains,    // ENABLED: Test PID gain corruption
 //	TR_LCD_mutex_Hold,
 //	TR_LCD_mutex_Delete,
-//	TR_Disable_All_IRQs,
+	TR_Disable_All_IRQs,  // ENABLED: Test interrupt disable (WDT protection)
 //	TR_Disable_ADC_IRQ,
 //	TR_Disable_PeriphClocks,
 //	TR_High_Priority_Thread,

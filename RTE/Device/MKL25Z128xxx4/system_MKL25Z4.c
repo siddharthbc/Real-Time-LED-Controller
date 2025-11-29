@@ -98,6 +98,7 @@
 
 #include <stdint.h>
 #include "MKL25Z4.h"
+#include "system_MKL25Z4.h"  // Include to get DISABLE_WDOG from config.h
 
 
 
@@ -112,9 +113,14 @@ uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK;
    ---------------------------------------------------------------------------- */
 
 void SystemInit (void) {
-#if (DISABLE_WDOG)
+// FORCE ENABLE COP for testing - comment out the #if/#else to force COP on
+#if 0  // Disabled - force COP enable below
   /* SIM_COPC: COPT=0,COPCLKS=0,COPW=0 */
   SIM->COPC = (uint32_t)0x00u;
+#else
+  /* Enable COP Watchdog with longest timeout (COPT=11, LPO clock) */
+  /* COPCLKS=0 (use 1kHz LPO), COPW=0 (normal mode), COPT=11 */
+  SIM->COPC = SIM_COPC_COPT(3);  // Use the proper macro
 #endif /* (DISABLE_WDOG) */
 #ifdef CLOCK_SETUP
   if((RCM->SRS0 & RCM_SRS0_WAKEUP_MASK) != 0x00U)

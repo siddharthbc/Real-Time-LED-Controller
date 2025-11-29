@@ -10,6 +10,10 @@
 #include "debug.h"
 #include "threads.h"
 
+#if ENABLE_COP_WATCHDOG
+#include "wdt.h"
+#endif
+
 #define VALIDATE 0
 #define SHOW_DATA 0
 #define MAX_ERROR 1
@@ -114,7 +118,16 @@ void read_xyz(void)
  */
 int init_mma()
 {
+#if ENABLE_COP_WATCHDOG
+	// Break the 100ms delay into smaller chunks and feed watchdog
+	for (int i = 0; i < 10; i++) {
+		Delay(10);
+		WDT_Feed();
+	}
+#else
 	Delay(100); // Give I2C time to stabilize? Investigate. <<<
+#endif
+
 	//check for device
 	if (i2c_read_byte(MMA_ADDR, REG_WHOAMI) != WHOAMI)
 		return 0;
@@ -122,7 +135,16 @@ int init_mma()
 	ShortDelay(MMA_DELAY_TBUF);
 	// Reset device
 	i2c_write_byte(MMA_ADDR, REG_CTRL2, 0x40);
+	
+#if ENABLE_COP_WATCHDOG
+	// Break the 500ms delay into smaller chunks and feed watchdog
+	for (int i = 0; i < 50; i++) {
+		Delay(10);
+		WDT_Feed();
+	}
+#else
 	Delay(500); // Delay after software reset (1 ms recommended, actual time unknown)
+#endif
 			
 	//select 14bit mode, low noise, data rate and standby mode
 	i2c_write_byte(MMA_ADDR, REG_CTRL1, MMA_CTRL1_DR(4));

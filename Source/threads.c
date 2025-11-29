@@ -24,6 +24,10 @@
 #include "MMA8451.h"
 #include "fault.h"
 
+#if ENABLE_COP_WATCHDOG
+#include "wdt.h"
+#endif
+
 void Thread_Read_Touchscreen(void * arg); // 
 void Thread_Draw_Waveforms(void * arg);
 void Thread_Draw_UI_Controls(void * arg);
@@ -201,6 +205,14 @@ void Thread_Draw_UI_Controls(void * arg) {
 		tick += THREAD_UPDATE_SETPOINT_PERIOD_TICKS;
 		osDelayUntil(tick); 
 		DEBUG_START(DBG_TUSP_POS);
+		
+#if ENABLE_COP_WATCHDOG
+		// Fault Protection: Feed the COP watchdog timer
+		// This must be called periodically to prevent MCU reset
+		// If TR_Disable_All_IRQs fault occurs, this thread stops running,
+		// watchdog times out, and MCU resets to a known-good state
+		WDT_Feed();
+#endif
 		
 #if ENABLE_PID_GAIN_VALIDATION
 		// Fault Protection: Validate PID gains before updating setpoint

@@ -24,6 +24,11 @@
 // Set to 0 to disable validation (to observe fault behavior without protection)
 #define ENABLE_PID_GAIN_VALIDATION  (1)
 
+// Set to 1 to enable COP Watchdog Timer (protects against TR_Disable_All_IRQs fault)
+// Set to 0 to disable watchdog (to observe fault behavior without protection)
+// WARNING: Once enabled, COP cannot be disabled without a reset
+#define ENABLE_COP_WATCHDOG  (1)
+
 // LCD and Graphics Optimizations
 #define LCD_BUS_DEFAULTS_TO_DATA 1 
 #define DRAW_LINE_RUNS_AS_RECTANGLES 1 
