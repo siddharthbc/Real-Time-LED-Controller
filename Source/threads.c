@@ -16,6 +16,7 @@
 #include "threads.h"
 #include "GPIO_defs.h"
 #include "debug.h"
+#include "config.h"
 #include "control.h"
 #include "UI.h"
 
@@ -61,6 +62,11 @@ const osThreadAttr_t Read_Accelerometer_attr = {
 void Create_OS_Objects(void) {
 	LCD_Create_OS_Objects();
 	
+#if SCOPE_SYNC_WITH_RTOS
+	// Initialize event flags for ISR-Thread synchronization (Approach 2)
+	scope_event_flags = osEventFlagsNew(NULL);
+#endif
+	
 	t_Read_TS = osThreadNew(Thread_Read_Touchscreen, NULL, &Read_Touchscreen_attr);  
 	t_DW = osThreadNew(Thread_Draw_Waveforms, NULL, &Draw_Waveforms_attr);
 	t_DUC = osThreadNew(Thread_Draw_UI_Controls, NULL, &Update_UI_Controls_attr);
@@ -93,11 +99,26 @@ void Thread_Draw_Waveforms(void * arg) {
 	osMutexRelease(LCD_mutex);		// relinquish LCD permission
 	tick = osKernelGetTickCount();        // retrieve the number of system ticks
 	
-		// Regular operation
+	// Regular operation
 	while (1) {
 		tick += THREAD_DRAW_WAVEFORM_PERIOD_TICKS;
 		osDelayUntil(tick);
 		DEBUG_START(DBG_T_DRAW_WVFMS_POS);  // Show thread's work has started
+		
+#if SCOPE_SYNC_WITH_RTOS
+		//=============================================================
+		// APPROACH 2: RTOS Event Flags
+		// Wait for event flag from ISR indicating buffer is full
+		// Non-blocking check (timeout = 0) to maintain periodic behavior
+		//=============================================================
+		uint32_t flags = osEventFlagsWait(scope_event_flags, SCOPE_FLAG_BUFFER_FULL, 
+		                                   osFlagsWaitAny, 0);
+		
+		if (flags == SCOPE_FLAG_BUFFER_FULL) {
+			// Buffer is full and ready to plot
+			// Transition to Plotting state - ISR will not write to buffers
+			g_scope_state = Plotting;
+			
 #if USE_LCD_MUTEX_LEVEL==1
 			DEBUG_START(DBG_BLOCKING_LCD_POS);
 			osMutexAcquire(LCD_mutex, osWaitForever); // get LCD permission
@@ -108,6 +129,38 @@ void Thread_Draw_Waveforms(void * arg) {
 #if USE_LCD_MUTEX_LEVEL==1
 			osMutexRelease(LCD_mutex);	// relinquish LCD permission
 #endif
+			// Plotting complete - transition back to Armed state
+			g_scope_state = Armed;
+		}
+		// If flag not set, skip drawing this cycle (no new data ready)
+
+#else
+		//=============================================================
+		// APPROACH 1: State Machine (Polling, no RTOS mechanisms)
+		// Poll the state variable to check if buffers are ready
+		//=============================================================
+		if (g_scope_state == Full) {
+			// Buffers are full and ready to plot
+			// Transition to Plotting state - ISR will not write to buffers
+			g_scope_state = Plotting;
+			
+#if USE_LCD_MUTEX_LEVEL==1
+			DEBUG_START(DBG_BLOCKING_LCD_POS);
+			osMutexAcquire(LCD_mutex, osWaitForever); // get LCD permission
+			DEBUG_STOP(DBG_BLOCKING_LCD_POS);
+#endif
+			UI_Draw_Waveforms(); // Update scope part of screen with waveforms
+
+#if USE_LCD_MUTEX_LEVEL==1
+			osMutexRelease(LCD_mutex);	// relinquish LCD permission
+#endif
+			// Plotting complete - transition back to Armed state
+			// ISR can now start looking for next trigger
+			g_scope_state = Armed;
+		}
+		// If state is not Full, skip drawing this cycle (no new data ready)
+#endif
+		
 		DEBUG_STOP(DBG_T_DRAW_WVFMS_POS); // Show thread's work is done
 	}
 }

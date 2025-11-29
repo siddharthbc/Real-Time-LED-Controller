@@ -102,7 +102,28 @@ typedef struct {
 } SPidFX;
 
 typedef enum {OpenLoop, BangBang, Incremental, Proportional, PID, PID_FX, MODE_COUNT} CTL_MODE_E;
-typedef enum {Armed, Triggered, Full, Disabled} SCOPE_STATE_E;
+
+// Scope state machine states for ISR-Thread synchronization
+// Armed:     Waiting for trigger (setpoint crosses threshold)
+// Triggered: Actively filling buffers with samples
+// Full:      Buffers are full, waiting for TDW to start plotting
+// Plotting:  TDW is plotting data, ISR must not write to buffers
+typedef enum {Armed, Triggered, Full, Plotting} SCOPE_STATE_E;
+
+//=============================================================
+// RTOS Event Flags for Scope Synchronization (Approach 2)
+// Used when SCOPE_SYNC_WITH_RTOS == 1
+//=============================================================
+#if SCOPE_SYNC_WITH_RTOS
+#include <cmsis_os2.h>
+
+// Event flag bit definitions
+#define SCOPE_FLAG_BUFFER_FULL    (1U << 0)  // ISR sets when buffer is full
+#define SCOPE_FLAG_PLOT_COMPLETE  (1U << 1)  // Thread sets when plotting is done
+
+// Event flags object (defined in control.c)
+extern osEventFlagsId_t scope_event_flags;
+#endif
 
 // Functions
 void Init_Buck_HBLED(void);

@@ -4,6 +4,7 @@
 
 #include "GPIO_defs.h"
 #include "debug.h"
+#include "config.h"
 #include "control.h"
 
 #include "timers.h"
@@ -11,6 +12,12 @@
 #include "LEDs.h"
 #include "UI.h"
 #include "FX.h"
+
+#if SCOPE_SYNC_WITH_RTOS
+#include <cmsis_os2.h>
+// Event flags for ISR-Thread synchronization
+osEventFlagsId_t scope_event_flags;
+#endif
 
 volatile int g_duty_cycle = 5;  // global to give debugger access
 
@@ -109,17 +116,116 @@ void Control_HBLED(void) {
 	res = ADC0->R[0];
 	g_measured_current_mA = (res*1500)>>16; // Extra Credit: Explain why this doesn't work: V_REF_MV*MA_SCALING_FACTOR)/(ADC_FULL_SCALE*R_SENSE)
 
-	// Save samples to buffer for scope display
-	g_meas_sample[sample_idx] = res;
-	g_set_sample[sample_idx] = g_set_current_code;
+	//=============================================================
+	// SCOPE SYNCHRONIZATION: ISR Side
+	// Approach selected by SCOPE_SYNC_WITH_RTOS in config.h
+	//=============================================================
 	
-	//   Enable the trigger if we've been armed.
-	//   Trigger on set point low-to-high past threshold
-		sample_idx++; 										
-	//   Start buffer display if we have a full buffer. 
-		if (sample_idx >= SAM_BUF_SIZE) { 
+#if SCOPE_SYNC_WITH_RTOS
+	//=============================================================
+	// APPROACH 2: RTOS Event Flags
+	// ISR uses state machine but signals thread via event flags
+	//=============================================================
+	switch (g_scope_state) {
+		case Armed:
+			// STATE: Armed - Waiting for trigger condition
+			// Check for trigger: setpoint crosses threshold (low-to-high)
+			if ((prev_set_current_mA < threshold_mA) && (g_set_current_mA >= threshold_mA)) {
+				// Trigger condition met! Start filling buffers
+				sample_idx = 0;
+				g_scope_state = Triggered;
+				// Start sampling immediately
+				g_meas_sample[sample_idx] = res;
+				g_set_sample[sample_idx] = g_set_current_code;
+				sample_idx++;
+			}
+			// In Armed state, do NOT fill buffers
+			break;
+			
+		case Triggered:
+			// STATE: Triggered - Actively filling buffers
+			g_meas_sample[sample_idx] = res;
+			g_set_sample[sample_idx] = g_set_current_code;
+			sample_idx++;
+			
+			// Check if buffer is full
+			if (sample_idx >= SAM_BUF_SIZE) {
+				sample_idx = 0;
+				g_scope_state = Full;
+				// RTOS: Signal thread that buffer is full
+				osEventFlagsSet(scope_event_flags, SCOPE_FLAG_BUFFER_FULL);
+			}
+			break;
+			
+		case Full:
+			// STATE: Full - Waiting for thread to start plotting
+			// Do NOT write to buffers
+			break;
+			
+		case Plotting:
+			// STATE: Plotting - Thread is reading buffers
+			// Do NOT write to buffers
+			break;
+			
+		default:
+			g_scope_state = Armed;
 			sample_idx = 0;
-		}																	
+			break;
+	}
+	
+#else
+	//=============================================================
+	// APPROACH 1: State Machine (Polling, no RTOS mechanisms)
+	// ISR and thread communicate via shared g_scope_state variable
+	//=============================================================
+	switch (g_scope_state) {
+		case Armed:
+			// STATE: Armed - Waiting for trigger condition
+			// Check for trigger: setpoint crosses threshold (low-to-high)
+			if ((prev_set_current_mA < threshold_mA) && (g_set_current_mA >= threshold_mA)) {
+				// Trigger condition met! Start filling buffers
+				sample_idx = 0;
+				g_scope_state = Triggered;
+				// Start sampling immediately
+				g_meas_sample[sample_idx] = res;
+				g_set_sample[sample_idx] = g_set_current_code;
+				sample_idx++;
+			}
+			// In Armed state, do NOT fill buffers
+			break;
+			
+		case Triggered:
+			// STATE: Triggered - Actively filling buffers
+			g_meas_sample[sample_idx] = res;
+			g_set_sample[sample_idx] = g_set_current_code;
+			sample_idx++;
+			
+			// Check if buffer is full
+			if (sample_idx >= SAM_BUF_SIZE) {
+				sample_idx = 0;
+				g_scope_state = Full;  // Thread will poll and detect this
+			}
+			break;
+			
+		case Full:
+			// STATE: Full - Buffers full, waiting for TDW to start plotting
+			// Do NOT write to buffers - TDW polls state and will transition to Plotting
+			break;
+			
+		case Plotting:
+			// STATE: Plotting - TDW is reading buffers, do not write
+			// Do NOT write to buffers - TDW will set state back to Armed when done
+			break;
+			
+		default:
+			// Unknown state - reset to Armed
+			g_scope_state = Armed;
+			sample_idx = 0;
+			break;
+	}
+#endif
+	//=============================================================
+	
 	prev_set_current_mA = g_set_current_mA;
 	
 	if (g_enable_control) {
