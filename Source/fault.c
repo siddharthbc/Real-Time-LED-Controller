@@ -42,7 +42,7 @@ Fault_Test_E Fault_Tests[] = {
 //	TR_Setpoint_High,
 //	TR_Setpoint_Zero,
 //	TR_Flash_Period,
-//	TR_PID_FX_Gains,
+	TR_PID_FX_Gains,    // ENABLED: Test PID gain corruption
 //	TR_LCD_mutex_Hold,
 //	TR_LCD_mutex_Delete,
 //	TR_Disable_All_IRQs,

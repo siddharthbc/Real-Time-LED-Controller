@@ -201,6 +201,13 @@ void Thread_Draw_UI_Controls(void * arg) {
 		tick += THREAD_UPDATE_SETPOINT_PERIOD_TICKS;
 		osDelayUntil(tick); 
 		DEBUG_START(DBG_TUSP_POS);
+		
+#if ENABLE_PID_GAIN_VALIDATION
+		// Fault Protection: Validate PID gains before updating setpoint
+		// This detects and corrects corrupted gains (e.g., from TR_PID_FX_Gains fault)
+		Validate_PID_Gains();
+#endif
+		
 		Update_Set_Current();
 		DEBUG_STOP(DBG_TUSP_POS);
 	}

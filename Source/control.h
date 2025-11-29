@@ -82,6 +82,22 @@
 #define I_GAIN_FX (0.625*CTL_PERIOD) 
 #define D_GAIN_FX (0.0*CTL_PERIOD)
 
+//=============================================================
+// PID Gain Validation Limits (for fault protection)
+// Used to detect and correct corrupted PID gains
+//=============================================================
+// Valid range for P gain: 0 to 10x default value
+#define P_GAIN_FX_MIN  (0)
+#define P_GAIN_FX_MAX  (10 * P_GAIN_FX)
+
+// Valid range for I gain: 0 to 10x default (or small positive if default is 0)
+#define I_GAIN_FX_MIN  (0)
+#define I_GAIN_FX_MAX  (10 * I_GAIN_FX + 10000)  // Allow some range even if default is 0
+
+// Valid range for D gain: 0 to 10x default (or small positive if default is 0)
+#define D_GAIN_FX_MIN  (0)
+#define D_GAIN_FX_MAX  (10 * D_GAIN_FX + 10000)  // Allow some range even if default is 0
+
 // Data type definitions
 typedef struct {
 	float dState; // Last position input
@@ -128,6 +144,10 @@ extern osEventFlagsId_t scope_event_flags;
 // Functions
 void Init_Buck_HBLED(void);
 void Update_Set_Current(void);
+
+// Fault protection: PID gain validation
+// Call periodically to detect and correct corrupted PID gains
+void Validate_PID_Gains(void);
 
 // Handler functions (callbacks)
 void Control_OnOff_Handler (UI_FIELD_T * fld, int v);

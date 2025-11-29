@@ -57,6 +57,41 @@ SPidFX plantPID_FX = {FL_TO_FX(0), // dState
 	D_GAIN_FX  // dGain
 };
 
+//=============================================================
+// PID Gain Validation Function (Fault Protection)
+// Detects corrupted PID gains and restores default values
+// Called periodically from Thread_Update_Setpoint
+//=============================================================
+void Validate_PID_Gains(void) {
+	// Check P gain - must be within valid range
+	if (plantPID_FX.pGain < P_GAIN_FX_MIN || plantPID_FX.pGain > P_GAIN_FX_MAX) {
+		// P gain is corrupted - restore default
+		plantPID_FX.pGain = P_GAIN_FX;
+	}
+	
+	// Check I gain - must be within valid range
+	// The fault TR_PID_FX_Gains sets iGain = -1000, which is negative
+	if (plantPID_FX.iGain < I_GAIN_FX_MIN || plantPID_FX.iGain > I_GAIN_FX_MAX) {
+		// I gain is corrupted - restore default
+		plantPID_FX.iGain = I_GAIN_FX;
+	}
+	
+	// Check D gain - must be within valid range
+	if (plantPID_FX.dGain < D_GAIN_FX_MIN || plantPID_FX.dGain > D_GAIN_FX_MAX) {
+		// D gain is corrupted - restore default
+		plantPID_FX.dGain = D_GAIN_FX;
+	}
+	
+	// Also validate integrator state limits (iMax, iMin)
+	// These should always be positive/negative duty cycle limits
+	if (plantPID_FX.iMax < 0 || plantPID_FX.iMax > FL_TO_FX(2*LIM_DUTY_CYCLE)) {
+		plantPID_FX.iMax = FL_TO_FX(LIM_DUTY_CYCLE);
+	}
+	if (plantPID_FX.iMin > 0 || plantPID_FX.iMin < FL_TO_FX(-2*LIM_DUTY_CYCLE)) {
+		plantPID_FX.iMin = FL_TO_FX(-LIM_DUTY_CYCLE);
+	}
+}
+
 float UpdatePID(SPid * pid, float error, float position){
 	float pTerm, dTerm, iTerm;
 

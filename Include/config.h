@@ -19,6 +19,11 @@
 // Set to 0 to use state machine approach (polling without RTOS mechanisms)
 #define SCOPE_SYNC_WITH_RTOS  (1)
 
+// Fault Protection Configuration
+// Set to 1 to enable PID gain validation (protects against TR_PID_FX_Gains fault)
+// Set to 0 to disable validation (to observe fault behavior without protection)
+#define ENABLE_PID_GAIN_VALIDATION  (1)
+
 // LCD and Graphics Optimizations
 #define LCD_BUS_DEFAULTS_TO_DATA 1 
 #define DRAW_LINE_RUNS_AS_RECTANGLES 1 
