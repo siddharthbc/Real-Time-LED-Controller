@@ -117,9 +117,6 @@ extern "C" {
   #endif
 #endif
 
-
-
-
 /* MCG mode constants */
 
 #define MCG_MODE_FEI                   0U

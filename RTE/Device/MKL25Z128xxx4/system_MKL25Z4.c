@@ -113,14 +113,13 @@ uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK;
    ---------------------------------------------------------------------------- */
 
 void SystemInit (void) {
-// FORCE ENABLE COP for testing - comment out the #if/#else to force COP on
-#if 0  // Disabled - force COP enable below
+#if DISABLE_WDOG
   /* SIM_COPC: COPT=0,COPCLKS=0,COPW=0 */
   SIM->COPC = (uint32_t)0x00u;
 #else
-  /* Enable COP Watchdog with longest timeout (COPT=11, LPO clock) */
+  /* Enable COP Watchdog with longest timeout (~100ms with LPO clock) */
   /* COPCLKS=0 (use 1kHz LPO), COPW=0 (normal mode), COPT=11 */
-  SIM->COPC = SIM_COPC_COPT(3);  // Use the proper macro
+  SIM->COPC = SIM_COPC_COPT(3);
 #endif /* (DISABLE_WDOG) */
 #ifdef CLOCK_SETUP
   if((RCM->SRS0 & RCM_SRS0_WAKEUP_MASK) != 0x00U)

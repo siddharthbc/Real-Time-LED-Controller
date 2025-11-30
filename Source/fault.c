@@ -42,11 +42,11 @@ Fault_Test_E Fault_Tests[] = {
 //	TR_Setpoint_High,
 //	TR_Setpoint_Zero,
 //	TR_Flash_Period,
-	TR_PID_FX_Gains,    // ENABLED: Test PID gain corruption
+	TR_PID_FX_Gains,      // ENABLED: Test PID gain corruption (mandatory)
 //	TR_LCD_mutex_Hold,
 //	TR_LCD_mutex_Delete,
-	TR_Disable_All_IRQs,  // ENABLED: Test interrupt disable (WDT protection)
-//	TR_Disable_ADC_IRQ,
+//	TR_Disable_All_IRQs,  // DISABLED temporarily to test other faults
+	TR_Disable_ADC_IRQ,   // ENABLED: Test ADC IRQ disable (extra credit)
 //	TR_Disable_PeriphClocks,
 //	TR_High_Priority_Thread,
 //	TR_osKernelLock,

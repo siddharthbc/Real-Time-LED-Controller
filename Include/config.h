@@ -29,6 +29,9 @@
 // WARNING: Once enabled, COP cannot be disabled without a reset
 #define ENABLE_COP_WATCHDOG  (1)
 
+// Set to 1 to enable ADC IRQ scrubbing (protects against TR_Disable_ADC_IRQ fault)
+#define ENABLE_ADC_IRQ_SCRUB  (1)
+
 // LCD and Graphics Optimizations
 #define LCD_BUS_DEFAULTS_TO_DATA 1 
 #define DRAW_LINE_RUNS_AS_RECTANGLES 1 

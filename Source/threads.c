@@ -219,6 +219,11 @@ void Thread_Draw_UI_Controls(void * arg) {
 		// This detects and corrects corrupted gains (e.g., from TR_PID_FX_Gains fault)
 		Validate_PID_Gains();
 #endif
+
+#if ENABLE_ADC_IRQ_SCRUB
+		// Fault Protection: Re-enable ADC IRQ (protects against TR_Disable_ADC_IRQ)
+		NVIC_EnableIRQ(ADC0_IRQn);
+#endif
 		
 		Update_Set_Current();
 		DEBUG_STOP(DBG_TUSP_POS);
