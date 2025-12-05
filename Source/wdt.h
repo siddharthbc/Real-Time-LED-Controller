@@ -34,8 +34,9 @@
 #define COP_TIMEOUT_1024MS  (0x03)  // ~1024ms timeout (2^10 LPO cycles)
 
 // Default timeout for fault protection
-// Use 256ms to give threads time to run while still catching stuck conditions
-#define COP_DEFAULT_TIMEOUT  COP_TIMEOUT_256MS
+// Use 32ms for fastest fault detection
+// Thread_Update_Setpoint runs every 100ms, but we need to feed more often
+#define COP_DEFAULT_TIMEOUT  COP_TIMEOUT_32MS
 
 /*----------------------------------------------------------------------------
  * Function Prototypes

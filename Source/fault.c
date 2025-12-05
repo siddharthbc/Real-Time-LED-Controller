@@ -42,11 +42,11 @@ Fault_Test_E Fault_Tests[] = {
 //	TR_Setpoint_High,
 //	TR_Setpoint_Zero,
 //	TR_Flash_Period,
-	TR_PID_FX_Gains,      // ENABLED: Test PID gain corruption (mandatory)
+//	TR_PID_FX_Gains,
 //	TR_LCD_mutex_Hold,
 //	TR_LCD_mutex_Delete,
-//	TR_Disable_All_IRQs,  // DISABLED temporarily to test other faults
-	TR_Disable_ADC_IRQ,   // ENABLED: Test ADC IRQ disable (extra credit)
+//	TR_Disable_All_IRQs,
+//	TR_Disable_ADC_IRQ,
 //	TR_Disable_PeriphClocks,
 //	TR_High_Priority_Thread,
 //	TR_osKernelLock,
@@ -96,7 +96,7 @@ void Test_Fault(int t) {
 			g_set_current_mA = 0;
 			break;
 		case TR_Flash_Period:
-			g_flash_period = 100;
+			g_flash_period = 0;  // Invalid period - will break timing
 			break;		
 		case TR_PID_FX_Gains:
 			// Corrupt one of the compensator gains
@@ -118,7 +118,9 @@ void Test_Fault(int t) {
 			SIM->SCGC6 = 0;
 			break;
 		case TR_Disable_All_IRQs:
-			// Disable Interrupts
+			// Delay to make fault signal visible before freezing system
+			osDelay(20);
+			// Now disable interrupts - system freezes, signal stays HIGH
 			__disable_irq();
 			break;
 		case TR_Disable_ADC_IRQ:
@@ -128,6 +130,7 @@ void Test_Fault(int t) {
 		case TR_osKernelLock:
 			// Lock kernel - don't let other tasks run
 			// See details at https://www.keil.com/pack/doc/CMSIS/RTOS2/html/group__CMSIS__RTOS__KernelCtrl.html#ga948609ee930d9b38336b9e1c2a4dfe12
+			osDelay(20);
 			osKernelLock();
 			break;
 		case TR_Change_MCU_Clock:
@@ -149,7 +152,7 @@ void Test_Fault(int t) {
 		case TR_End:
 			break;
 	}
-	osDelay(2); // To make DBG_FAULT_POS pulse visible
+	osDelay(2); // To make DBG_FAULT_POS pulse visible (200ms = clearly visible when zoomed out)
 	DEBUG_STOP(DBG_FAULT_POS);
 }
 

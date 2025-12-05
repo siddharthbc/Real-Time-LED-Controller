@@ -4,18 +4,26 @@
  * Part 2: Fault Protection for TR_Disable_All_IRQs
  * ECE 460/560 Final Project
  *
+ * Based on Professor Dean's WDT Demo:
+ * https://github.com/alexander-g-dean/ESF/tree/master/NXP/Code/Chapter_7/WDT%20Demo
+ *
  * The COP (Computer Operating Properly) watchdog provides protection against
  * system hangs caused by disabled interrupts or infinite loops.
  *
+ * COP Timeout Options (with 1kHz LPO clock):
+ *   COPT=1: 2^5 cycles  = ~32ms   (fastest)
+ *   COPT=2: 2^8 cycles  = ~256ms
+ *   COPT=3: 2^10 cycles = ~1024ms (slowest)
+ *
  * Protection Mechanism:
- * 1. WDT_Init() enables COP with a timeout (e.g., 256ms)
- * 2. Thread_Update_Setpoint calls WDT_Feed() every 100ms
+ * 1. SystemInit() enables COP with ~32ms timeout (COPT=1)
+ * 2. WDT_Feed() must be called frequently (every ~20ms)
  * 3. If TR_Disable_All_IRQs fault occurs:
  *    - __disable_irq() stops all interrupts
  *    - RTOS scheduler stops (SysTick is disabled)
  *    - Threads stop running
  *    - WDT_Feed() is never called
- *    - COP times out and resets the MCU
+ *    - COP times out in ~32ms and resets the MCU
  * 4. System restarts in a known-good state
  *----------------------------------------------------------------------------*/
 

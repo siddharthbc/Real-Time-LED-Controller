@@ -41,7 +41,7 @@
 #define DBG_T_DRAW_UI_CTLS_POS	DBG_7
 #define DBG_BLOCKING_LCD_POS		DBG_8
 #define DBG_LCD_COMM_POS				DBG_9
-#define DBG_FAULT_POS  					DBG_10
+#define DBG_FAULT_POS  					DBG_9
 #define DBG_IDLE_LOOP						DBG_11
 
 #define DBG_TREADACC_POS				DBG_NULL

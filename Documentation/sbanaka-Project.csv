@@ -1,0 +1,16 @@
+,,,NCSU ECE 460/560 Project Data,,,,,,
+,,,"Make a copy of this spreadsheet (File -> Make a Copy) and rename it username1-Project or username1-username2-Project (if you have a partner), replacing usernames with the NCSU username (e.g. agdean) for you and your partner (if any).",,,,,,
+,,,"Edit that copy, filling in or replacing the highlighted cells",,,,,,
+,,,Enter all times in Î¼s without units. Data validation is enabled for cells expecting times.,,,,,,
+,,,Download the file in a CSV format: File -> Download -> Comma Separated Values (CSV).,,,,,,
+,,,Upload the CSV file (e.g. username1-Project.csv or username1-username2.csv) as part of your Moodle submission.,,,,,,
+email 1,,,sbanaka@ncsu.edu,,,,,,
+email 2,,,,,,,,,
+,,,,,,,,,
+2,,,,Thread_Draw_Waveforms,Thread_Draw_Waveforms,Thread_Draw_Waveforms,Thread_Draw_UI_Controls,Thread_Draw_UI_Controls,Thread_Draw_UI_Controls
+2,,,,Minimum,Average,Maximum,Minimum,Average,Maximum
+2,a,,Time accessing or blocking on LCD mutex in Î¼s,12.5 µs ,2632 µs ,29025,12.5 µs ,12.5  µs ,12.5 µs 
+2,b,,Thread execution time in Î¼s (from rise to fall for thread's debug signal),20862 µs ,23238 µs ,50413 µs ,34737 µs ,38880 µs ,58212 µs 
+,,,,,,,,,
+3,a,,Relationship of timing statistics,"The 12.5 µs minimum blocking for both threads is the bare function call overhead. Thread execution (2b) is pure LCD drawing time. Thread_Draw_Waveforms max blocking (29.025 ms) Thread_Draw_UI_Controls avg execution (38.88 ms) shows preemption - when Waveforms gets preempted by UI_Controls, it waits the full UI_Controls execution time. Execution times (20-58 ms) dominate because LCD operations are slow.",,,,,
+3,b,,Unexpected statistics,"Thread_Draw_UI_Controls has NO blocking variation (always 12.5 Âµs) - it never gets preempted, likely higher priority or favorable scheduling. Thread_Draw_Waveforms has 2300x blocking variance (12.5 Âµs to 29 ms) - frequently preempted by UI_Controls. Counterintuitively, UI_Controls (longer execution avg 38.88 ms) never blocks, while Waveforms (shorter execution avg 23.24 ms) blocks often (avg 2.63 ms). These blocking times represent thread preemption.",,,,,

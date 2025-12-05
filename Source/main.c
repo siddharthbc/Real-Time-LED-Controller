@@ -55,7 +55,6 @@ void Fail_Flash(int n) {
 int main (void) {
 #if ENABLE_COP_WATCHDOG
 	// Check if we recovered from a COP watchdog reset
-	// Note: COP is already configured in SystemInit() with ~100ms timeout (COPT=3)
 	int cop_reset = WDT_Was_Reset_By_COP();
 #endif
 	

@@ -10,11 +10,14 @@
 ## Table of Contents
 
 1. [Introduction](#1-introduction)
-2. [Problem Statement](#2-problem-statement)
-3. [Solution Design](#3-solution-design)
-4. [Implementation Details](#4-implementation-details)
-5. [Comparison of Approaches](#5-comparison-of-approaches)
-6. [Testing and Verification](#6-testing-and-verification)
+2. [System Architecture](#2-system-architecture)
+3. [Problem Statement](#3-problem-statement)
+4. [Solution Design](#4-solution-design)
+5. [Implementation Details](#5-implementation-details)
+6. [Comparison of Approaches](#6-comparison-of-approaches)
+7. [Testing and Verification](#7-testing-and-verification)
+8. [Appendix A: State Machine Diagram](#appendix-a-state-machine-diagram)
+9. [Appendix B: Code Snippets](#appendix-b-code-snippets)
 
 ---
 
@@ -37,9 +40,142 @@ This document describes the synchronization mechanism implemented between the AD
 
 ---
 
-## 2. Problem Statement
+## 2. System Architecture
 
-### 2.1 Original System Behavior (Before Synchronization)
+### 2.1 Hardware/Software Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           HARDWARE LAYER                                     │
+│  ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌───────────┐  │
+│  │   ADC   │    │   DAC   │    │   PWM   │    │  LCD +  │    │Accelero-  │  │
+│  │ (sense) │    │(setpoint│    │  (LED)  │    │Touchscrn│    │  meter    │  │
+│  └────┬────┘    └────▲────┘    └────▲────┘    └────┬────┘    └─────┬─────┘  │
+└───────┼──────────────┼──────────────┼──────────────┼────────────────┼───────┘
+        │              │              │              │                │
+        ▼              │              │              ▼                ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│                              SOFTWARE LAYER                                │
+│                                                                            │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    ISR: Control_HBLED (~10.7 kHz)                   │   │
+│  │  • Reads ADC (measured current)                                     │   │
+│  │  • Runs PID control algorithm                                       │   │
+│  │  • Updates PWM duty cycle                                          │   │
+│  │  • Fills waveform sample buffers                                    │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                              ▲                                             │
+│                              │ ADC Interrupt                               │
+│  ┌───────────────────────────┴─────────────────────────────────────────┐   │
+│  │                         RTOS KERNEL                                 │   │
+│  │   ┌──────────────┐ ┌──────────────┐ ┌───────────────┐ ┌──────────┐  │   │
+│  │   │Thread_Update │ │Thread_Draw_  │ │Thread_Draw_UI │ │Thread_   │  │   │
+│  │   │  Setpoint    │ │  Waveforms   │ │   Controls    │ │Read_Accel│  │   │
+│  │   │  (1ms)       │ │  (100ms)     │ │   (100ms)     │ │ (varies) │  │   │
+│  │   └──────────────┘ └──────────────┘ └───────────────┘ └──────────┘  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Component Responsibilities
+
+#### ISR: Control_HBLED() (~10.7 kHz)
+
+**This is the heart of the system - runs as an interrupt, not a thread!**
+
+| Step | Action | Description |
+|------|--------|-------------|
+| 1 | **Read ADC** | Get ADC result, convert to `g_measured_current_mA` |
+| 2 | **Fill Waveform Buffers** | Store samples in `g_meas_sample[]` and `g_set_sample[]` |
+| 3 | **Run PID Control** | Calculate error, run PID algorithm, get duty cycle |
+| 4 | **Update PWM** | Clamp duty cycle, write to TPM0 hardware |
+
+**Key Characteristics:**
+- Runs at **~10.7 kHz** (every ~93 microseconds)
+- Triggered by ADC conversion complete interrupt
+- Must be FAST - no blocking or waiting allowed
+- Directly controls LED current via PWM
+
+#### Thread_Update_Setpoint (1ms period, High Priority)
+
+| Step | Action | Description |
+|------|--------|-------------|
+| 1 | **Feed Watchdog** | `WDT_Feed()` - prevents system reset |
+| 2 | **Validate Data** | Check PID gains, clamp setpoint/flash period |
+| 3 | **Update Setpoint** | Generate flash waveform pattern, update DAC |
+
+**Key Characteristics:**
+- **Highest priority thread** - runs every 1ms reliably
+- Generates the **flash waveform pattern** (on/off timing)
+- Central location for **all fault protections**
+
+#### Thread_Draw_Waveforms (100ms period, Above Normal Priority)
+
+| Step | Action | Description |
+|------|--------|-------------|
+| 1 | **Check for Data** | Poll `g_scope_state == Full` or wait for event flag |
+| 2 | **Acquire LCD Mutex** | Get exclusive LCD access |
+| 3 | **Draw Waveforms** | `UI_Draw_Waveforms()` - render to LCD |
+| 4 | **Re-arm** | Set state back to Armed for next trigger |
+
+**Key Characteristics:**
+- Reads the **shared waveform buffers** filled by ISR
+- Must **coordinate with ISR** to avoid data corruption
+- Uses **LCD mutex** for exclusive LCD access
+
+#### Thread_Draw_UI_Controls (100ms period, Normal Priority)
+
+| Step | Action | Description |
+|------|--------|-------------|
+| 1 | **Acquire LCD Mutex** | Wait for exclusive LCD access |
+| 2 | **Update UI** | Refresh current values, sliders, buttons |
+| 3 | **Release LCD Mutex** | Allow other threads to use LCD |
+
+#### Thread_Read_Accelerometer (Variable period)
+
+| Step | Action | Description |
+|------|--------|-------------|
+| 1 | **Read MMA8451** | I2C communication with accelerometer |
+| 2 | **Calculate Tilt** | Convert to roll and pitch angles |
+| 3 | **Update Flash Period** | `g_flash_period = 30 + roll` (2-180ms range) |
+
+**Key Characteristic:** Tilting the board changes LED flash rate!
+
+### 2.3 Shared Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         SHARED VARIABLES                                 │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  CONTROL DATA (written by threads, read by ISR)                 │    │
+│  │  • g_set_current_mA      - target LED current                   │    │
+│  │  • g_flash_period        - flash timing (from accelerometer)    │    │
+│  │  • g_enable_control      - control on/off                       │    │
+│  │  • plantPID_FX           - PID gain parameters                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  FEEDBACK DATA (written by ISR, read by threads)                │    │
+│  │  • g_measured_current_mA - actual LED current                   │    │
+│  │  • g_duty_cycle          - current PWM duty cycle               │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  WAVEFORM BUFFERS (written by ISR, read by Thread_Draw_Waveforms)│   │
+│  │  • g_meas_sample[960]    - measured current history             │    │
+│  │  • g_set_sample[960]     - setpoint history                     │    │
+│  │  • g_scope_state         - synchronization state machine        │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Problem Statement
+
+### 3.1 Original System Behavior (Before Synchronization)
 
 In the original implementation, the ISR and thread operated independently without coordination:
 
@@ -65,7 +201,42 @@ while (1) {
 }
 ```
 
-### 2.2 Problems Identified
+### 3.2 The Race Condition Problem
+
+#### Visual Representation of the Original Problem
+
+```
+TIME ──────────────────────────────────────────────────────────────────────►
+
+ISR (10.7 kHz):    ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃ ┃W┃
+                   ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤ ├─┤
+                   ~93µs each write to g_meas_sample[]
+
+Thread (100ms):                          ┃───────── R ─────────┃
+                                         │                     │
+                                       START                  END
+                                       READ                   READ
+                                         
+  PROBLEM: While thread reads buffer[200-600], ISR writes buffer[300-500]!
+           Result: Corrupted data, visual glitches
+```
+
+#### What Happens Without Synchronization
+
+```
+BEFORE SYNC: Random Waveform Position (No Trigger)
+
+Time 0ms:    [────────⌇⌇⌇────────]    Waveform in middle
+             └─ buffer read ─────┘
+
+Time 100ms:  [⌇⌇⌇────────────────]    Waveform at left  
+             └─ buffer read ─────┘
+
+Time 200ms:  [────────────────⌇⌇⌇]    Waveform at right
+             └─ buffer read ─────┘
+
+Result: Waveform "jumps around" on LCD - impossible to analyze!
+```
 
 #### Problem 1: Data Tearing (Race Condition)
 
@@ -89,7 +260,7 @@ Without a trigger mechanism:
 - Each refresh shows a different portion of the signal
 - Makes analysis of the control system response impossible
 
-### 2.3 Synchronization Requirements
+### 3.3 Synchronization Requirements
 
 From the project specification (Page 10):
 
@@ -100,9 +271,48 @@ From the project specification (Page 10):
 
 ---
 
-## 3. Solution Design
+## 4. Solution Design
 
-### 3.1 State Machine Architecture
+### 4.1 The Solution: Coordinated Handshaking
+
+#### Visual Representation of the Solution
+
+```
+TIME ──────────────────────────────────────────────────────────────────────►
+
+State:    [────── ARMED ──────][── TRIGGERED ──][FULL][─ PLOTTING ─][ARMED]
+                               │                │    │             │
+ISR:            NO WRITES      │◄── WRITES ───►│    │  NO WRITES  │
+                               │   960 samples  │    │             │
+                               │                │    │             │
+Thread:         POLLING        │    POLLING     │    │◄── READS ──►│ RE-ARM
+                               │                │    │             │
+                               ▲                     ▲             ▲
+                            Trigger              Buffer         Thread
+                           Detected               Full          Done
+
+Result: Clean handoff - ISR and Thread NEVER access buffer simultaneously!
+```
+
+#### After Sync: Stable Triggered Waveform
+
+```
+AFTER SYNC: Consistent Trigger Position
+
+Time 0ms:    [⌇⌇⌇────────────────]    Rising edge at left
+             └─ triggered capture ─┘
+
+Time 100ms:  [⌇⌇⌇────────────────]    Rising edge at left  
+             └─ triggered capture ─┘
+
+Time 200ms:  [⌇⌇⌇────────────────]    Rising edge at left
+             └─ triggered capture ─┘
+
+Result: Waveform is STABLE - always triggered at same point!
+        Just like a real oscilloscope!
+```
+
+### 4.2 State Machine Architecture
 
 We implemented a 4-state finite state machine to coordinate the ISR and thread:
 
@@ -116,7 +326,7 @@ We implemented a 4-state finite state machine to coordinate the ISR and thread:
                          └──────────┘
 ```
 
-### 3.2 State Descriptions
+### 4.3 State Descriptions
 
 | State | Description | ISR Action | Thread Action |
 |-------|-------------|------------|---------------|
@@ -125,7 +335,7 @@ We implemented a 4-state finite state machine to coordinate the ISR and thread:
 | **Full** | Buffer complete, waiting for thread | Do NOT write | Detect and take ownership |
 | **Plotting** | Thread reading buffers | Do NOT write | Read buffers, draw LCD |
 
-### 3.3 Trigger Condition
+### 4.4 Trigger Condition
 
 The trigger fires when the setpoint current crosses the threshold from low to high:
 
@@ -135,7 +345,7 @@ if ((prev_set_current_mA < threshold_mA) && (g_set_current_mA >= threshold_mA))
 
 Where `threshold_mA = 1` (defined as `SCOPE_TRIGGER_THRESHOLD_mA`)
 
-### 3.4 Two Implementation Approaches
+### 4.5 Two Implementation Approaches
 
 Per the project requirements, ECE 560 students implement both approaches:
 
@@ -150,9 +360,9 @@ A preprocessor switch selects the active approach:
 
 ---
 
-## 4. Implementation Details
+## 5. Implementation Details
 
-### 4.1 Files Modified
+### 5.1 Files Modified
 
 | File | Changes |
 |------|---------|
@@ -161,7 +371,7 @@ A preprocessor switch selects the active approach:
 | `control.c` | Implemented state machine in `Control_HBLED()` |
 | `threads.c` | Implemented synchronization in `Thread_Draw_Waveforms()` |
 
-### 4.2 Approach 1: State Machine (Without RTOS)
+### 5.2 Approach 1: State Machine (Without RTOS)
 
 #### Configuration
 ```c
@@ -222,7 +432,7 @@ if (g_scope_state == Full) {
 - **RTOS dependency**: None for synchronization
 - **Simplicity**: Straightforward implementation
 
-### 4.3 Approach 2: RTOS Event Flags
+### 5.3 Approach 2: RTOS Event Flags
 
 #### Configuration
 ```c
@@ -290,9 +500,9 @@ void Create_OS_Objects(void) {
 
 ---
 
-## 5. Comparison of Approaches
+## 6. Comparison of Approaches
 
-### 5.1 Feature Comparison
+### 6.1 Feature Comparison
 
 | Feature | Approach 1 (State Machine) | Approach 2 (Event Flags) |
 |---------|---------------------------|-------------------------|
@@ -304,7 +514,7 @@ void Create_OS_Objects(void) {
 | Portability | High (any system) | RTOS-dependent |
 | Complexity | Lower | Slightly higher |
 
-### 5.2 Before vs After Comparison
+### 6.2 Before vs After Comparison
 
 | Aspect | Before (No Sync) | After (With Sync) |
 |--------|------------------|-------------------|
@@ -314,7 +524,7 @@ void Create_OS_Objects(void) {
 | Buffer access | Uncoordinated | Mutually exclusive |
 | Analysis capability | Difficult | Easy |
 
-### 5.3 Timing Analysis
+### 6.3 Timing Analysis
 
 **Buffer Fill Time:**
 - 960 samples at ~10.7 kHz ISR rate
@@ -328,9 +538,9 @@ void Create_OS_Objects(void) {
 
 ---
 
-## 6. Testing and Verification
+## 7. Testing and Verification
 
-### 6.1 Expected Behavior
+### 7.1 Expected Behavior
 
 With synchronization enabled:
 
@@ -339,7 +549,7 @@ With synchronization enabled:
 3. Blue (setpoint) and orange (measured) traces should be **coherent**
 4. Display should update approximately every flash period
 
-### 6.2 Debug Signals
+### 7.2 Debug Signals
 
 Use these debug signals with a logic analyzer to verify timing:
 
@@ -349,7 +559,7 @@ Use these debug signals with a logic analyzer to verify timing:
 | DBG_T_DRAW_WVFMS | PTB10 | Thread_Draw_Waveforms execution |
 | DBG_PENDING_WVFM | PTB9 | Scope buffer filling (Triggered state) |
 
-### 6.3 Switching Between Approaches
+### 7.3 Switching Between Approaches
 
 To test each approach:
 

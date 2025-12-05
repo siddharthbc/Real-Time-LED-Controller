@@ -1,0 +1,16 @@
+,,,NCSU ECE 460/560 Project Data,,,,,,
+,,,"Make a copy of this spreadsheet (File -> Make a Copy) and rename it username1-Project or username1-username2-Project (if you have a partner), replacing usernames with the NCSU username (e.g. agdean) for you and your partner (if any).",,,,,,
+,,,"Edit that copy, filling in or replacing the highlighted cells",,,,,,
+,,,Enter all times in μs without units. Data validation is enabled for cells expecting times.,,,,,,
+,,,Download the file in a CSV format: File -> Download -> Comma Separated Values (CSV).,,,,,,
+,,,Upload the CSV file (e.g. username1-Project.csv or username1-username2.csv) as part of your Moodle submission.,,,,,,
+email 1,,,username1@ncsu.edu,,,,,,
+email 2,,,username2@ncsu.edu,,,,,,
+,,,,,,,,,
+2,,,,Thread_Draw_Waveforms,Thread_Draw_Waveforms,Thread_Draw_Waveforms,Thread_Draw_UI_Controls,Thread_Draw_UI_Controls,Thread_Draw_UI_Controls
+2,,,,Minimum,Average,Maximum,Minimum,Average,Maximum
+2,a,,Time accessing or blocking on LCD mutex in μs,,,,,,
+2,b,,Thread execution time in μs (from rise to fall for thread’s debug signal),,,,,,
+,,,,,,,,,
+3,a,,Relationship of timing statistics,,,,,,
+3,b,,Unexpected statistics,,,,,,

@@ -117,9 +117,11 @@ void SystemInit (void) {
   /* SIM_COPC: COPT=0,COPCLKS=0,COPW=0 */
   SIM->COPC = (uint32_t)0x00u;
 #else
-  /* Enable COP Watchdog with longest timeout (~100ms with LPO clock) */
-  /* COPCLKS=0 (use 1kHz LPO), COPW=0 (normal mode), COPT=11 */
-  SIM->COPC = SIM_COPC_COPT(3);
+  /* Enable COP Watchdog with ~1024ms timeout */
+  /* COPCLKS=0 (use 1kHz LPO), COPW=0 (normal mode), COPT=11 (~1 second) */
+  /* This allows LCD initialization to complete */
+  /* Timeout options: COPT=1 (~32ms), COPT=2 (~256ms), COPT=3 (~1024ms) */
+  SIM->COPC = SIM_COPC_COPT(3);  // ~1 second timeout
 #endif /* (DISABLE_WDOG) */
 #ifdef CLOCK_SETUP
   if((RCM->SRS0 & RCM_SRS0_WAKEUP_MASK) != 0x00U)

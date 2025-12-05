@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECE 460/560 Fault Analysis Report</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Calibri', sans-serif;
+            font-size: 9pt;
+            line-height: 1.3;
+            margin: 0.5in;
+            color: #000;
+            background: white;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        img {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+        /* Main section headers - blue background like Introduction, Synchronization, Fault Analysis */
+        h1 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 12pt 0 6pt 0;
+            color: white;
+            background-color: #4F81BD;
+            padding: 6pt 8pt;
+            border: solid #4F81BD 3pt;
+        }
+        /* Subsection headers - light blue background like "Fault Test n" */
+        h2 {
+            font-size: 13pt;
+            font-weight: bold;
+            margin: 10pt 0 6pt 0;
+            color: #1F3864;
+            background-color: #D6DCE5;
+            padding: 4pt 8pt;
+        }
+        /* Sub-subsection headers - underlined like "Fault Analysis", "Fault Management Approach" */
+        h3 {
+            font-size: 11pt;
+            font-weight: bold;
+            margin: 8pt 0 4pt 0;
+            color: #1F3864;
+            border-bottom: 1pt solid #4F81BD;
+            padding-bottom: 2pt;
+        }
+        /* Project Overview - not highlighted, just bold */
+        h4 {
+            font-size: 10pt;
+            font-weight: bold;
+            margin: 8pt 0 4pt 0;
+            color: #000;
+        }
+        .title {
+            font-size: 26pt;
+            font-family: 'Calibri Light', sans-serif;
+            color: #1F3864;
+            text-align: center;
+            margin-bottom: 6pt;
+        }
+        .subtitle {
+            font-size: 18pt;
+            font-family: 'Calibri Light', sans-serif;
+            color: #1F3864;
+            text-align: center;
+            margin-bottom: 12pt;
+        }
+        p {
+            margin: 4pt 0;
+            text-align: justify;
+        }
+        ul, ol {
+            margin: 4pt 0;
+            padding-left: 20pt;
+        }
+        li {
+            margin: 2pt 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8pt 0;
+            font-size: 9pt;
+        }
+        th {
+            background-color: #4F81BD;
+            color: white;
+            font-weight: bold;
+            padding: 4pt 6pt;
+            text-align: left;
+            border: 1px solid #4F81BD;
+        }
+        td {
+            padding: 3pt 6pt;
+            border: 1px solid #ccc;
+            vertical-align: top;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 8pt;
+            background-color: #ffffcc;
+            padding: 1px 3px;
+            color: #000;
+        }
+        pre {
+            font-family: 'Courier New', monospace;
+            font-size: 8pt;
+            background-color: #f4f4f4;
+            padding: 6pt;
+            border-left: 3px solid #4F81BD;
+            overflow-x: auto;
+            margin: 6pt 0;
+            line-height: 1.2;
+            white-space: pre-wrap;
+        }
+        .code-box {
+            background-color: #f5f5f5;
+            color: #000000;
+            padding: 6pt;
+            border-left: 3px solid #4F81BD;
+            border: 1px solid #ccc;
+            margin: 6pt 0;
+            font-family: 'Courier New', monospace;
+            font-size: 8pt;
+            line-height: 1.2;
+            white-space: pre-wrap;
+        }
+        .comparison-table {
+            width: 100%;
+            margin: 8pt 0;
+            table-layout: fixed;
+            overflow: hidden;
+        }
+        .comparison-table td {
+            width: 50%;
+            padding: 6pt;
+            text-align: center;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            vertical-align: top;
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+        .comparison-table img {
+            max-width: 100% !important;
+            width: 100%;
+            height: auto !important;
+            display: block;
+            margin: 0 auto;
+        }
+        .figure-placeholder {
+            background-color: #e8e8e8;
+            border: 2px dashed #999;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4pt 0;
+            font-style: italic;
+            color: #666;
+            font-size: 9pt;
+        }
+        .screenshot {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            margin: 4pt 0;
+            display: block;
+        }
+        .two-column-layout {
+            display: table;
+            width: 100%;
+            margin: 6pt 0;
+        }
+        .left-col, .right-col {
+            display: table-cell;
+            width: 48%;
+            vertical-align: top;
+            padding: 4pt;
+        }
+        .left-col {
+            padding-right: 8pt;
+        }
+        .right-col {
+            padding-left: 8pt;
+            border-left: 1px solid #ccc;
+        }
+        strong {
+            font-weight: bold;
+        }
+        .fault-section {
+            page-break-inside: avoid;
+            margin-top: 12pt;
+        }
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            h1 {
+                background-color: #4F81BD !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            h2 {
+                background-color: #D6DCE5 !important;
+                color: #1F3864 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            h3 {
+                color: #1F3864 !important;
+                border-bottom: 1pt solid #4F81BD !important;
+            }
+            th {
+                background-color: #4F81BD !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .code-box {
+                background-color: #f5f5f5 !important;
+                color: #000000 !important;
+                border: 1px solid #ccc !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            code {
+                background-color: #ffffcc !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .fault-section {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <p class="title">ECE 560: Embedded System Architectures</p>
+    <p class="subtitle">Final Project: Shields Up! Report</p>
+
+    <p><strong>Author:</strong> Siddharth Banakar<br>
+    <strong>Email:</strong> sbanaka@ncsu.edu</p>
+
+    <h1>Introduction</h1>
+    
+    <p>This report documents the implementation and evaluation of fault injection testing and fault-tolerant design techniques for an embedded real-time LED controller system running on the NXP FRDM-KL25Z development board with an ARM Cortex-M0+ processor and CMSIS-RTOS2 (RTX5).</p>
+
+    <h4>Project Overview</h4>
+    <p>The "Shields Up!" project investigates how software and hardware faults can compromise a real-time embedded system, and demonstrates practical protection mechanisms to detect, mitigate, and recover from these faults. The system under test is a closed-loop LED current controller that uses:</p>
+    <ul>
+        <li><strong>PID control</strong> for precise LED current regulation</li>
+        <li><strong>RTOS-based multithreading</strong> for concurrent task execution</li>
+        <li><strong>Accelerometer input</strong> for dynamic flash period control</li>
+        <li><strong>LCD display</strong> with touchscreen user interface</li>
+    </ul>
+
+    <h4>Objectives</h4>
+    <ol>
+        <li><strong>Analyze fault behavior</strong>: Understand how different categories of faults affect system operation</li>
+        <li><strong>Implement fault protections</strong>: Develop lightweight, practical countermeasures that can detect and recover from injected faults</li>
+        <li><strong>Evaluate effectiveness</strong>: Capture and compare system behavior before and after enabling each protection mechanism using logic analyzer waveforms</li>
+    </ol>
+
+    <h4>Available Faults</h4>
+    <p>The fault injection framework supports the following faults across multiple categories:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Fault</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Shared Data Corruption</strong></td><td>TR_Setpoint_High</td><td>Sets LED current setpoint to dangerous 1000mA</td></tr>
+            <tr><td></td><td>TR_Setpoint_Zero</td><td>Sets LED current setpoint to 0mA</td></tr>
+            <tr><td></td><td>TR_Flash_Period</td><td>Corrupts flash timing period to 0ms</td></tr>
+            <tr><td></td><td>TR_PID_FX_Gains</td><td>Corrupts PID integral gain to -1000</td></tr>
+            <tr><td><strong>Interrupt Manipulation</strong></td><td>TR_Disable_All_IRQs</td><td>Disables all interrupts via PRIMASK</td></tr>
+            <tr><td></td><td>TR_Disable_ADC_IRQ</td><td>Disables only the ADC interrupt</td></tr>
+            <tr><td><strong>RTOS Resource Attacks</strong></td><td>TR_LCD_mutex_Hold</td><td>Acquires LCD mutex and never releases it</td></tr>
+            <tr><td></td><td>TR_LCD_mutex_Delete</td><td>Deletes the LCD mutex while in use</td></tr>
+            <tr><td></td><td>TR_osKernelLock</td><td>Locks the RTOS kernel, preventing scheduling</td></tr>
+            <tr><td></td><td>TR_Fill_Queue</td><td>Fills ADC message queue with garbage</td></tr>
+            <tr><td><strong>Thread Manipulation</strong></td><td>TR_High_Priority_Thread</td><td>Raises priority to realtime and enters infinite loop</td></tr>
+            <tr><td><strong>Hardware Corruption</strong></td><td>TR_Disable_PeriphClocks</td><td>Disables peripheral clock gates</td></tr>
+            <tr><td></td><td>TR_Change_MCU_Clock</td><td>Corrupts MCU clock configuration</td></tr>
+            <tr><td></td><td>TR_Slow_TPM</td><td>Corrupts timer/PWM module settings</td></tr>
+            <tr><td><strong>Memory Corruption</strong></td><td>TR_Stack_Overflow</td><td>Deliberately overflows the stack</td></tr>
+        </tbody>
+    </table>
+
+    <h4>Protection Strategies</h4>
+    <p>The implemented protections follow these design principles:</p>
+    <ul>
+        <li><strong>Minimal overhead</strong>: Simple range checks and periodic validation (2–3 lines of code per fault)</li>
+        <li><strong>Defense in depth</strong>: Software validation combined with a hardware watchdog for critical faults</li>
+        <li><strong>Configurable</strong>: Protections can be enabled/disabled via preprocessor switches in <code>config.h</code></li>
+        <li><strong>Fail-safe recovery</strong>: Return to a known-good state rather than continuing with corrupted data</li>
+    </ul>
+
+    <h4>Test Setup - Debug Signal Configuration</h4>
+    <p>The fault injection trigger signal was configured to use <strong>DIO 9 (PTE3)</strong> instead of the default DIO 10 (PTE1). This change was necessary because PTE1 is hardwired to the OpenSDA debugger on the FRDM-KL25Z board for UART1_RX.</p>
+    
+    <p><strong>Configuration in debug.h:</strong></p>
+    <div class="code-box">#define DBG_FAULT_POS  DBG_9  // Changed from DBG_10 to DBG_9 (PTE3)</div>
+
+    <h4>Waveform Capture Setup</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Signal</th>
+                <th>Channel/DIO</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Measured Current</td><td>Scope CH1 (Orange)</td><td>LED current via sense resistor (~150mA peak)</td></tr>
+            <tr><td>Setpoint Current</td><td>Scope CH2 (Blue)</td><td>Target current reference (~100mA)</td></tr>
+            <tr><td>Fault Trigger</td><td><strong>DIO 9 (PTE3)</strong></td><td>Rising edge indicates fault injection</td></tr>
+            <tr><td>T_Draw_Waveforms</td><td>DIO 6</td><td>Thread execution timing</td></tr>
+            <tr><td>T_Draw_UI_Controls</td><td>DIO 7</td><td>Thread execution timing</td></tr>
+            <tr><td>LCD_Blocking</td><td>DIO 8</td><td>LCD mutex blocking</td></tr>
+        </tbody>
+    </table>
+    <p>All waveform captures are triggered on the <strong>rising edge of DIO 9</strong> to align the display with the exact moment of fault injection.</p>
+
+    <!-- SYNCHRONIZATION SECTION -->
+    <h1>Synchronization</h1>
+
+    <h2>Mutual Exclusion for LCD Update Operations</h2>
+    
+    <h3>Timing Analysis for Base Code</h3>
+    <p>The LCD is a shared resource accessed by multiple threads (<code>Thread_Draw_Waveforms</code> and <code>Thread_Draw_UI_Controls</code>). A mutex (<code>LCD_mutex</code>) ensures mutual exclusion to prevent display corruption. The following screenshots show each thread accessing the mutex with a pulse on the LCD blocking signal (DIO 8).</p>
+
+    <div style="text-align: center; margin: 12pt 0; width: 100%; overflow: hidden;">
+        <img src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Q1_T_Draw_waveform_mtuex.png" alt="Thread_Draw_Waveforms accessing mutex" style="max-width: 100%; width: 80%; height: auto; display: block; margin: 0 auto; border: 1px solid #ccc;">
+        <p><em>Figure S.1. Thread_Draw_Waveforms (DIO 6) accessing the LCD mutex. LCD Blocking signal (DIO 8) shows mutex hold time. Mean blocking time: 3.9367 ms.</em></p>
+    </div>
+
+    <div style="text-align: center; margin: 12pt 0; width: 100%; overflow: hidden;">
+        <img src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Q1_T_draw_ui_controls_waveform.png" alt="Thread_Draw_UI_Controls accessing mutex" style="max-width: 100%; width: 80%; height: auto; display: block; margin: 0 auto; border: 1px solid #ccc;">
+        <p><em>Figure S.2. Thread_Draw_UI_Controls (DIO 7) accessing the LCD mutex. LCD Blocking signal (DIO 8) shows mutex hold time. Mean blocking time: 3.7476 ms.</em></p>
+    </div>
+
+    <p><strong>Observations:</strong></p>
+    <ul>
+        <li><strong>LCD Blocking (DIO 8):</strong> Shows pulses when each thread holds the mutex</li>
+        <li><strong>T_Draw_Waveforms (DIO 6):</strong> Thread execution timing, mutex acquired during LCD updates</li>
+        <li><strong>T_Draw_UI_Controls (DIO 7):</strong> Thread execution timing, mutex acquired during UI control updates</li>
+        <li><strong>Mean mutex hold time:</strong> ~3.7-3.9 ms for LCD operations</li>
+        <li><strong>Minimum hold time:</strong> 12.500 µs</li>
+        <li><strong>Maximum hold time:</strong> 29.500 ms</li>
+    </ul>
+
+    <h2>Synchronization for Scope Waveform Display</h2>
+    <p>This section explains the synchronization used between the ADC ISR time base and the waveform plotting thread to eliminate tearing and provide a stable, triggered oscilloscope-style display.</p>
+
+    <h3>System Components</h3>
+    <table>
+        <thead>
+            <tr><th>Component</th><th>Function</th><th>Rate</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>ADC0 IRQ Handler</td><td>Executes Control_HBLED() for PID control and samples waveform data</td><td>~10.7 kHz</td></tr>
+            <tr><td>Thread_Draw_Waveforms</td><td>Reads waveform buffers and displays them on the LCD</td><td>Every 100 ms</td></tr>
+            <tr><td>Shared Buffers</td><td>g_set_sample[960] and g_meas_sample[960]</td><td>960 samples</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Problem Statement</h3>
+    <ul>
+        <li><strong>Data tearing:</strong> ISR writes to the buffers while the draw thread reads them, producing inconsistent samples.</li>
+        <li><strong>Unstable display:</strong> Waveform appears at random positions with no consistent trigger reference.</li>
+        <li><strong>Race conditions:</strong> Uncoordinated concurrent access to g_set_sample[] and g_meas_sample[].</li>
+    </ul>
+
+    <h3>Synchronization Requirements (from the specification)</h3>
+    <ol>
+        <li>Control_HBLED must NOT start filling buffers until the setpoint exceeds the trigger threshold.</li>
+        <li>Control_HBLED must STOP filling buffers when they are full (960 samples).</li>
+        <li>Thread_Draw_Waveforms must NOT start plotting until the buffers are full.</li>
+        <li>Control_HBLED must NOT start filling again until the thread has finished plotting.</li>
+    </ol>
+
+    <h3>Solution: State Machine Architecture</h3>
+    <p>A 4-state FSM coordinates the ISR (producer) and plotting thread (consumer):</p>
+    <div class="code-box">Armed --(trigger)--> Triggered --(buffer full)--> Full --(thread starts)--> Plotting --(done)--> Armed</div>
+
+    <h3>State Descriptions</h3>
+    <table>
+        <thead>
+            <tr><th>State</th><th>ISR Action</th><th>Thread Action</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Armed</strong></td><td>Monitor setpoint; do NOT write buffers</td><td>Wait for Full state</td></tr>
+            <tr><td><strong>Triggered</strong></td><td>Fill buffers (960 samples)</td><td>Waiting</td></tr>
+            <tr><td><strong>Full</strong></td><td>Stop writing; notify thread</td><td>Detect Full; transition to Plotting</td></tr>
+            <tr><td><strong>Plotting</strong></td><td>Do NOT write buffers</td><td>Read buffers; draw LCD; return to Armed</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Trigger Condition</h3>
+    <p>Trigger fires on a low→high crossing of the setpoint threshold:</p>
+    <div class="code-box">#define SCOPE_TRIGGER_THRESHOLD_mA  (1)
+
+if ((prev_set_current_mA < threshold_mA) && (g_set_current_mA >= threshold_mA)) {
+    // Trigger! Start capturing
+}</div>
+
+    <h3>Implementation Approaches</h3>
+    <p>Two approaches are selectable via a configuration switch in config.h:</p>
+    <div class="code-box">#define SCOPE_SYNC_WITH_RTOS  (1)  // 0 = Polling, 1 = Event Flags</div>
+
+    <h4>Approach 1: State Machine (Polling)</h4>
+    <p>Configuration: SCOPE_SYNC_WITH_RTOS = 0</p>
+    <ul>
+        <li>Synchronization via a shared volatile scope-state variable.</li>
+        <li>Draw thread polls state (Full → Plotting) at its periodic rate.</li>
+        <li>Simple and RTOS-independent.</li>
+    </ul>
+
+    <h4>Approach 2: RTOS Event Flags</h4>
+    <p>Configuration: SCOPE_SYNC_WITH_RTOS = 1</p>
+    <ul>
+        <li>ISR sets an event flag when buffers become full.</li>
+        <li>Thread checks/waits on flags and plots after the notification.</li>
+        <li>More explicit RTOS primitive; slightly higher complexity.</li>
+    </ul>
+
+    <h3>Comparison of Approaches</h3>
+    <table>
+        <thead>
+            <tr><th>Feature</th><th>Polling</th><th>Event Flags</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Sync mechanism</td><td>Shared volatile variable</td><td>RTOS event flags</td></tr>
+            <tr><td>ISR notification</td><td>state = Full</td><td>osEventFlagsSet(...)</td></tr>
+            <tr><td>Thread detection</td><td>Poll scope state</td><td>osEventFlagsWait(...)</td></tr>
+            <tr><td>RTOS required</td><td>No</td><td>Yes</td></tr>
+            <tr><td>Portability</td><td>High</td><td>RTOS-dependent</td></tr>
+            <tr><td>Complexity</td><td>Lower</td><td>Slightly higher</td></tr>
+            <tr><td>Flag management</td><td>Manual</td><td>Auto-clear on read</td></tr>
+            <tr><td>ISR-safe</td><td>Yes</td><td>Yes</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Timing Analysis</h3>
+    <ul>
+        <li><strong>Buffer fill time:</strong> 960 / 10.7 kHz ≈ 90 ms</li>
+        <li><strong>Draw thread period:</strong> 100 ms</li>
+        <li><strong>Max Full→Plotting latency:</strong> ≤ one thread period (~100 ms)</li>
+    </ul>
+
+    <h3>Results</h3>
+    <ul>
+        <li><strong>Before:</strong> Waveform jumps randomly; no consistent trigger; potential torn reads.</li>
+        <li><strong>After:</strong> Stable display position; consistent trigger alignment; coherent setpoint and measured traces.</li>
+    </ul>
+
+    <h3>Files Modified for Synchronization</h3>
+    <table>
+        <thead>
+            <tr><th>File</th><th>Change</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>config.h</code></td><td>Added SCOPE_SYNC_WITH_RTOS configuration switch</td></tr>
+            <tr><td><code>control.h</code></td><td>Added SCOPE state enum and event flag declarations</td></tr>
+            <tr><td><code>control.c</code></td><td>Implemented scope state machine in Control_HBLED()</td></tr>
+            <tr><td><code>threads.c</code></td><td>Added event-flag init and synchronization in Thread_Draw_Waveforms()</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Conclusion</h3>
+    <p>Both approaches eliminate tearing and stabilize the triggered scope display. Polling is simpler and portable, while event flags provide explicit ISR→thread notification. In both cases, correctness comes from ensuring the ISR writes only during capture states and the thread reads only after buffers are complete.</p>
+
+    <!-- FAULT ANALYSIS AND MANAGEMENT SECTION -->
+    <h1>Fault Analysis and Management</h1>
+
+    <!-- FAULT 1 -->
+    <div class="fault-section">
+        <h2>Fault Test 1: TR_PID_FX_Gains</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_PID_FX_Gains\TR_PID_FX_Gains_before.png" alt="Without Protection Waveform">
+                    <p><em>Figure 1.1. LED current shows slight irregularity after fault corrupts PID gains.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_PID_FX_Gains\TR_PID_FX_Gains_after.png" alt="With Protection Waveform">
+                    <p><em>Figure 1.2. Fault detection and response code corrects gains, maintaining stable operation.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault overwrites the <code>plantPID_FX.iGain</code> variable with the value -1000, corrupting the integral gain of the PID controller. Figure 1.1 shows that this causes the control loop to behave incorrectly due to the invalid gain value. The measured current (orange, ~150mA) shows some irregularity after the fault pulse (visible on DIO 9/Fault_2).</p>
+        
+        <p><strong>Trigger Signal:</strong> DIO 9 (PTE3) - Rising edge indicates when fault is injected.</p>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault in <code>plantPID_FX.iGain</code> is detected using <strong>range checking validation</strong>. The response validates all PID gains against expected ranges and restores default values if corruption is detected.</p>
+
+                <ul>
+                    <li>The PID gains (<code>pGain</code>, <code>iGain</code>, <code>dGain</code>) are validated against known safe ranges every 1ms</li>
+                    <li>If any gain falls outside its valid range, it is immediately restored to the default value</li>
+                    <li>The validation runs in <code>Thread_Update_Setpoint</code>, which has the highest thread priority</li>
+                    <li>This approach catches corruption regardless of the source (fault injection, memory corruption, cosmic rays, etc.)</li>
+                    <li>The fault sets <code>iGain = -1000</code>, which fails the range check <code>iGain &lt; 0</code> and triggers restoration</li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">// Set to 1 to enable PID gain validation
+#define ENABLE_PID_GAIN_VALIDATION  (1)</div>
+
+                <p><strong>control.c - Validation Function:</strong></p>
+                <div class="code-box">void Validate_PID_Gains(void) {
+    // Check pGain - should be positive and reasonable
+    if (plantPID_FX.pGain < 0 || 
+        plantPID_FX.pGain > FL_TO_FX(100)) {
+        plantPID_FX.pGain = FL_TO_FX(P_GAIN_FL);
+    }
+    // Check iGain - the fault sets this to -1000
+    if (plantPID_FX.iGain < FL_TO_FX(-10) || 
+        plantPID_FX.iGain > FL_TO_FX(10)) {
+        plantPID_FX.iGain = FL_TO_FX(I_GAIN_FL);
+    }
+    // Check dGain
+    if (plantPID_FX.dGain < FL_TO_FX(-10) || 
+        plantPID_FX.dGain > FL_TO_FX(10)) {
+        plantPID_FX.dGain = FL_TO_FX(D_GAIN_FL);
+    }
+}</div>
+
+                <p><strong>threads.c - Thread Integration:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_PID_GAIN_VALIDATION
+        Validate_PID_Gains();
+#endif
+        Update_Set_Current();
+    }
+}</div>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 1.2, the system continues running normally without any noticeable problems with the output current. It takes approximately 100ms (one thread period) to detect and correct the fault. Because <code>Thread_Update_Setpoint</code> runs at 10 Hz (100ms period), the fault will be detected and corrected within this time. The overhead of calling <code>Validate_PID_Gains()</code> is minimal since it only performs simple range comparisons.</p>
+    </div>
+
+    <!-- FAULT 2 -->
+    <div class="fault-section">
+        <h2>Fault Test 2: TR_Disable_All_IRQs</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Disable_All_IRQs\TR_Disable_All_IRQs_before.png" alt="Without Protection Waveform">
+                    <p><em>Figure 2.1. System freezes completely after fault disables all interrupts. DIO 9 shows single fault pulse, DIO 7/6 stop pulsing, analog signals go flat.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Disable_All_IRQs\TR_Disable_All_IRQs_after.png" alt="With Protection Waveform">
+                    <p><em>Figure 2.2. COP Watchdog detects hang and resets system. Multiple fault pulses show repeated injection with system recovering each time.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault calls <code>__disable_irq()</code> which sets the PRIMASK bit to disable all configurable-priority interrupts. Figure 2.1 shows that this causes the system to freeze completely:</p>
+        <ul>
+            <li><strong>DIO 9 (Fault):</strong> Single pulse goes HIGH and stays HIGH - system is frozen</li>
+            <li><strong>DIO 7, 6 (Thread activity):</strong> Pulses <strong>stop completely</strong> after the fault</li>
+            <li><strong>Analog signals (Orange/Blue):</strong> LED current control goes flat and <strong>never recovers</strong></li>
+            <li>The RTOS scheduler stops (SysTick interrupt disabled); the system is permanently dead without watchdog protection</li>
+        </ul>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault is handled using the <strong>COP (Computer Operating Properly) Watchdog Timer</strong>. This hardware watchdog provides protection against system hangs by resetting the MCU if it is not serviced within the timeout period.</p>
+
+                <ul>
+                    <li>The COP watchdog is a <strong>hardware timer</strong> that runs independently of the CPU and cannot be stopped by software once enabled</li>
+                    <li>A high-priority thread feeds the watchdog every 1ms by writing sequence (0x55, 0xAA) to the service register</li>
+                    <li>If the CPU hangs, the thread stops running and the watchdog is not fed</li>
+                    <li>After ~1024ms without being fed, the COP triggers a <strong>hardware reset</strong></li>
+                    <li>This is the only protection that works when all interrupts are disabled, because it uses <strong>hardware</strong>, not software</li>
+                </ul>
+
+                <p><strong>COP Timeout Options (1kHz LPO clock):</strong></p>
+                <table style="font-size: 8pt; margin-top: 4pt;">
+                    <thead><tr><th>COPT</th><th>Timeout</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>~32ms</td></tr>
+                        <tr><td>2</td><td>~256ms</td></tr>
+                        <tr><td>3</td><td>~1024ms</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_COP_WATCHDOG  (1)</div>
+
+                <p><strong>system_MKL25Z4.c - Watchdog Init:</strong></p>
+                <div class="code-box">#if DISABLE_WDOG
+  SIM->COPC = (uint32_t)0x00u;
+#else
+  // Enable COP with ~1024ms timeout
+  SIM->COPC = SIM_COPC_COPT(3);
+#endif</div>
+
+                <p><strong>wdt.c - Watchdog Service:</strong></p>
+                <div class="code-box">void WDT_Feed(void) {
+    SIM->SRVCOP = 0x55;
+    SIM->SRVCOP = 0xAA;
+}
+int WDT_Was_Reset_By_COP(void) {
+    return (RCM->SRS0 & RCM_SRS0_WDOG_MASK) ? 1 : 0;
+}</div>
+
+                <p><strong>threads.c - Periodic Feed:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_COP_WATCHDOG
+        WDT_Feed();
+#endif
+        Update_Set_Current();
+    }
+}</div>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 2.2, the system recovers automatically after each fault injection. The waveform shows multiple pulses every 2 seconds with the system recovering each time within ~1 second (watchdog timeout). This demonstrates robust protection against system hangs caused by disabled interrupts.</p>
+    </div>
+
+    <!-- FAULT 3 -->
+    <div class="fault-section">
+        <h2>Fault Test 3: TR_Disable_ADC_IRQ (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Disable_ADC_IRQ\TR_Disable_ADC_IRQ_before.png" alt="Without Protection Waveform">
+                    <p><em>Figure 3.1. LED current shows irregularity/dip after fault disables ADC interrupt. DIO 7/6 continue pulsing but analog control degrades.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Disable_ADC_IRQ\TR_Disable_ADC_IRQ_after.png" alt="With Protection Waveform">
+                    <p><em>Figure 3.2. ADC IRQ scrubbing re-enables the interrupt, maintaining stable LED current control.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault calls <code>NVIC_DisableIRQ(ADC0_IRQn)</code> which specifically disables the ADC interrupt while leaving other interrupts (including SysTick) functional. Figure 3.1 shows the impact:</p>
+        <ul>
+            <li><strong>DIO 7, 6 (Thread activity):</strong> Continue pulsing - RTOS scheduler still runs</li>
+            <li><strong>Analog signals:</strong> Show <strong>visible irregularity/dip</strong> after fault - control loop is disrupted</li>
+            <li>The ADC interrupt handler <code>Control_HBLED()</code> stops being called; control loop uses stale data</li>
+        </ul>
+        
+        <p>This is more insidious than <code>TR_Disable_All_IRQs</code> because the system appears to be running but the control loop is broken.</p>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault is handled using <strong>periodic IRQ scrubbing</strong> - unconditionally re-enabling the ADC interrupt from a thread context.</p>
+
+                <ul>
+                    <li>The protection works by <strong>unconditionally re-enabling</strong> the ADC interrupt every 1ms</li>
+                    <li>Calling <code>NVIC_EnableIRQ()</code> when already enabled has no effect, making it safe to call repeatedly</li>
+                    <li>This "scrubbing" approach catches any transient disabling within 1ms</li>
+                    <li>The technique is lightweight (single register write) with negligible performance impact</li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_ADC_IRQ_SCRUB  (1)</div>
+
+                <p><strong>threads.c - Periodic IRQ Scrubbing:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_ADC_IRQ_SCRUB
+        // Unconditionally re-enable ADC interrupt
+        NVIC_EnableIRQ(ADC0_IRQn);
+#endif
+        Update_Set_Current();
+    }
+}</div>
+
+                <p><strong>Key details:</strong> Single line of code, ~1ms recovery vs ~1024ms for watchdog reset.</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 3.2, the system continues operating normally despite the fault being injected every 2 seconds. Consistent current pulses throughout with minimal disruption. The overhead is negligible - just a single register write to the NVIC.</p>
+    </div>
+
+    <!-- FAULT 4 -->
+    <div class="fault-section">
+        <h2>Fault Test 4: TR_Setpoint_High (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Setpoint_High\TR_Setpoint_High_before.png" alt="Without Protection Waveform">
+                    <p><em>Figure 4.1. LED current spikes to ~450mA after fault sets setpoint to 1000mA. Current remains elevated and erratic.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Setpoint_High\TR_Setpoint_High_after.png" alt="With Protection Waveform">
+                    <p><em>Figure 4.2. Setpoint validation clamps current to 300mA max. Brief spike but system quickly recovers.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault directly overwrites <code>g_set_current_mA = 1000</code>, setting the target current to a dangerously high value (normal operation is ~75-100mA). Figure 4.1 shows:</p>
+        <ul>
+            <li><strong>Analog signal (Orange):</strong> <strong>Spikes dramatically to ~450mA</strong> - well above safe operating limits</li>
+            <li>Current remains elevated and oscillates erratically; could damage the LED or cause thermal issues</li>
+        </ul>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault is handled using <strong>range clamping</strong> - a simple bounds check that limits the setpoint to safe values.</p>
+
+                <ul>
+                    <li>The setpoint <code>g_set_current_mA</code> is checked against hardware-safe limits every 1ms</li>
+                    <li>If value exceeds 300mA (max safe), it is clamped to 300mA</li>
+                    <li>If value is negative (invalid), it is clamped to 0mA</li>
+                    <li>Protection runs <strong>before</strong> <code>Update_Set_Current()</code>, ensuring DAC never receives dangerous setpoint</li>
+                    <li>Extremely lightweight - just two integer comparisons per thread cycle</li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_SETPOINT_VALIDATION  (1)</div>
+
+                <p><strong>threads.c - Range Clamping:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_SETPOINT_VALIDATION
+        // Clamp setpoint to safe range (0-300mA)
+        if (g_set_current_mA > 300) 
+            g_set_current_mA = 300;
+        if (g_set_current_mA < 0) 
+            g_set_current_mA = 0;
+#endif
+        Update_Set_Current();
+    }
+}</div>
+
+                <p><strong>Key details:</strong> Just 2 lines of code, ~1ms recovery time.</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 4.2, peak current is clamped to ~300mA instead of spiking to 450mA+. System quickly recovers to normal operation. LED current returns to safe levels within 1-2ms. Extremely lightweight protection (2 lines) with negligible overhead.</p>
+    </div>
+
+    <!-- FAULT 5 -->
+    <div class="fault-section">
+        <h2>Fault Test 5: TR_Flash_Period (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Flash_Period\TR_Flash_Period_before.png" alt="Without Protection Waveform">
+                    <p><em>Figure 5.1. LED flash timing becomes extremely rapid after fault sets period to 0. Many rapid pulses where only a few should occur.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Flash_Period\TR_Flash_Period_after.png" alt="With Protection Waveform">
+                    <p><em>Figure 5.2. Flash period validation clamps to minimum 2ms, maintaining normal timing.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault directly overwrites <code>g_flash_period = 0</code>, setting the flash period to an invalid value. Normal operation has flash periods of 2-180ms. Figure 5.1 shows:</p>
+        <ul>
+            <li><strong>Analog signal (Orange):</strong> Shows <strong>many rapid pulses</strong> - LED flashes continuously</li>
+            <li>Before fault: ~6 normal pulses; After fault: Continuous rapid pulsing as period collapses to 0</li>
+            <li>Causes excessive power consumption and visual flickering</li>
+        </ul>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault is handled using <strong>range clamping</strong> - bounds check that limits flash period to valid values.</p>
+
+                <ul>
+                    <li>The flash period <code>g_flash_period</code> is checked against valid timing limits every 1ms</li>
+                    <li>Valid range is 2-180ms (accelerometer-controlled flash rate)</li>
+                    <li>If value &lt; 2ms (too fast), clamped to 2ms minimum</li>
+                    <li>If value &gt; 180ms (too slow), clamped to 180ms maximum</li>
+                    <li>Period of 0ms would cause division-by-zero or extremely rapid flashing</li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_FLASH_PERIOD_VALIDATION  (1)</div>
+
+                <p><strong>threads.c - Range Clamping:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_FLASH_PERIOD_VALIDATION
+        // Clamp flash period to valid range (2-180ms)
+        if (g_flash_period < 2) 
+            g_flash_period = 2;
+        if (g_flash_period > 180) 
+            g_flash_period = 180;
+#endif
+        Update_Set_Current();
+    }
+}</div>
+
+                <p><strong>Key details:</strong> Just 2 lines of code, ~1ms recovery time.</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 5.2, flash period is clamped to minimum 2ms instead of 0. Only 4-5 pulses visible (normal behavior) with no rapid continuous pulsing. System continues operating with proper timing. Extremely lightweight protection (2 lines) with negligible overhead.</p>
+    </div>
+
+    <!-- FAULT 6 -->
+    <div class="fault-section">
+        <h2>Fault Test 6: TR_Slow_TPM (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Slow_TPM\before_fault_normal_pwm.png" alt="Before Fault (Normal Operation)">
+                    <p><em>Figure 6.1. Normal LED current operation before fault injection. Regular ~150mA pulses with consistent flash timing.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Slow_TPM\after_fault_with_protection.png" alt="With Protection Enabled">
+                    <p><em>Figure 6.2. After fault injection with protection enabled. TPM scrubbing restores TPM0->MOD within 1ms.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault directly overwrites <code>TPM0->MOD = 23456</code>, changing the Timer/PWM Module 0 modulo register from the correct value of 750 to an invalid value. This changes the PWM switching frequency:</p>
+        <ul>
+            <li><strong>Normal operation:</strong> PWM frequency = 48MHz / (750 × 2) ≈ <strong>32 kHz</strong></li>
+            <li><strong>After fault:</strong> PWM frequency = 48MHz / (23456 × 2) ≈ <strong>1 kHz</strong></li>
+        </ul>
+        <p>This 31× slower PWM frequency breaks the buck converter's operation, causing incorrect LED current regulation, potential inductor saturation, and audible noise.</p>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault is handled using <strong>register scrubbing</strong> - periodically checking and restoring the TPM0->MOD register to its correct value.</p>
+
+                <ul>
+                    <li>The TPM0->MOD register is checked against expected <code>PWM_PERIOD</code> value (750) every 1ms</li>
+                    <li>If corrupted, it is immediately restored to <code>PWM_PERIOD</code></li>
+                    <li>Runs in <code>Thread_Update_Setpoint</code> with high priority</li>
+                    <li>Simple integer comparison with minimal overhead</li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_TPM_SCRUB  (1)</div>
+
+                <p><strong>threads.c - Register Scrubbing:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_TPM_SCRUB
+        // Restore TPM0->MOD to correct value
+        if (TPM0->MOD != PWM_PERIOD) {
+            TPM0->MOD = PWM_PERIOD;
+        }
+#endif
+        Update_Set_Current();
+    }
+}</div>
+
+                <p><strong>Key details:</strong> 3 lines of code, ~1ms recovery time.</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 6.2, PWM frequency remains at ~32 kHz despite fault injection. TPM0->MOD is restored within 1ms of corruption. LED current control continues normally with no audible noise or control instability.</p>
+    </div>
+
+    <!-- FAULT 7 -->
+    <div class="fault-section">
+        <h2>Fault Test 7: TR_Disable_PeriphClocks (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Disable_PeriphClocks\before_fault_no_protection.png" alt="Without Protection Waveform">
+                    <p><em>Figure 7.1. LED current goes to constant high level after fault disables peripheral clocks. ADC stops, PWM control is lost.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Disable_PeriphClocks\after_fault_with_protection.png" alt="With Protection Waveform">
+                    <p><em>Figure 7.2. Clock scrubbing re-enables peripheral clocks within 1ms, maintaining normal LED current control.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault directly clears <code>SIM->SCGC6 = 0</code>, disabling clock gates to critical peripherals:</p>
+        <ul>
+            <li><strong>ADC0</strong> - No analog-to-digital conversion (current measurement stops)</li>
+            <li><strong>TPM0</strong> - No timer/PWM operation (switching stops)</li>
+            <li><strong>DAC0</strong> - No digital-to-analog conversion (setpoint output stops)</li>
+        </ul>
+        <p>Figure 7.1 shows current goes to a <strong>constant ~175mA</strong> - completely uncontrolled. This is a complete loss of control functionality.</p>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault is handled using <strong>clock gate scrubbing</strong> - periodically re-enabling the critical peripheral clocks.</p>
+
+                <ul>
+                    <li>Unconditionally re-enables clocks for ADC0, TPM0, and DAC0 every 1ms</li>
+                    <li>Uses OR operation (<code>|=</code>) to avoid disturbing other clock settings</li>
+                    <li>Safe to call repeatedly - enabling already-enabled clock has no effect</li>
+                    <li>Runs in <code>Thread_Update_Setpoint</code> with high priority</li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_CLOCK_SCRUB  (1)</div>
+
+                <p><strong>threads.c - Clock Gate Scrubbing:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_CLOCK_SCRUB
+        // Re-enable critical peripheral clocks
+        SIM->SCGC6 |= SIM_SCGC6_ADC0_MASK | 
+                      SIM_SCGC6_TPM0_MASK | 
+                      SIM_SCGC6_DAC0_MASK;
+#endif
+        Update_Set_Current();
+    }
+}</div>
+
+                <p><strong>Key details:</strong> Single line of code, ~1ms recovery time.</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 7.2, LED current pulses continue normally despite fault injection. Peripheral clocks are restored within 1ms of being disabled. No visible disruption to LED current control.</p>
+    </div>
+
+    <!-- FAULT 8 -->
+    <div class="fault-section">
+        <h2>Fault Test 8: TR_Change_MCU_Clock (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Change_MCU_Clock\before_fault_no_protection.png" alt="Without Protection Waveform">
+                    <p><em>Figure 8.1. LED control becomes erratic after fault corrupts MCG settings. Pulses stop and LEDs flash brightly.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_Change_MCU_Clock\after_fault_with_protection.png" alt="With Protection Waveform">
+                    <p><em>Figure 8.2. MCG scrubbing restores clock settings within 1ms, maintaining normal LED current control.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault directly overwrites <code>MCG->C5 = 0x0018</code>, corrupting the Multipurpose Clock Generator PLL divider settings. This affects:</p>
+        <ul>
+            <li><strong>Incorrect timing</strong> for all peripherals (UART, PWM, timers)</li>
+            <li><strong>Erratic LED behavior</strong> - LEDs flash brightly and uncontrollably</li>
+            <li><strong>Control loop instability</strong> - PWM frequency and ADC timing are wrong</li>
+        </ul>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>The fault is handled using <strong>MCG register scrubbing</strong> - detecting the specific corrupted value and restoring the correct setting.</p>
+
+                <ul>
+                    <li>Checks if <code>MCG->C5</code> has been set to known fault value (0x0018)</li>
+                    <li>If detected, restores correct PLL divider setting</li>
+                    <li>Targeted scrub that catches specific fault injection</li>
+                    <li>Runs every 1ms in <code>Thread_Update_Setpoint</code></li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_MCG_SCRUB  (1)</div>
+
+                <p><strong>threads.c - MCG Register Scrubbing:</strong></p>
+                <div class="code-box">void Thread_Update_Setpoint(void * arg) {
+    while (1) {
+        osDelayUntil(tick);
+#if ENABLE_MCG_SCRUB
+        // Restore MCG settings if corrupted
+        if (MCG->C5 == 0x0018) {
+            MCG->C5 = MCG_C5_PRDIV0(1);
+        }
+#endif
+        Update_Set_Current();
+    }
+}</div>
+
+                <p><strong>Key details:</strong> Detects specific fault value, ~1ms recovery.</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 8.2, LED current pulses continue normally despite fault injection. MCG settings are restored within 1ms of being corrupted. No visible disruption, no bright flashing or erratic behavior.</p>
+    </div>
+
+    <!-- FAULT 9 -->
+    <div class="fault-section">
+        <h2>Fault Test 9: TR_High_Priority_Thread (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_High_Priority_Thread\before_fault_no_protection.png" alt="Without Protection Waveform">
+                    <p><em>Figure 9.1. System freezes after fault thread takes highest priority. DIO 9 goes HIGH (infinite loop), threads stop and never recover.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_High_Priority_Thread\after_fault_with_watchdog.png" alt="With COP Watchdog">
+                    <p><em>Figure 9.2. COP Watchdog detects hang and resets system. Multiple recovery cycles visible every ~3 seconds.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault raises its own thread priority to <code>osPriorityRealtime</code> (highest) and enters an infinite loop:</p>
+        <div class="code-box">case TR_High_Priority_Thread:
+    osThreadSetPriority(osThreadGetId(), osPriorityRealtime);
+    while (1)
+        DEBUG_TOGGLE(DBG_FAULT_POS);
+    break;</div>
+
+        <p>This is a <strong>thread starvation attack</strong>:</p>
+        <ul>
+            <li>Fault thread has higher priority than all other threads</li>
+            <li>RTOS scheduler never gives CPU time to other threads</li>
+            <li><code>Thread_Update_Setpoint</code> cannot run to feed the watchdog</li>
+            <li>All application functionality stops</li>
+        </ul>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>This fault is handled by the <strong>COP Watchdog Timer</strong> - the same mechanism used for <code>TR_Disable_All_IRQs</code>.</p>
+
+                <ul>
+                    <li>COP watchdog runs on hardware, independent of RTOS scheduler</li>
+                    <li>When high-priority thread monopolizes CPU, watchdog is not fed</li>
+                    <li>After ~1024ms timeout, COP triggers hardware reset</li>
+                    <li>System restarts in known-good state</li>
+                </ul>
+
+                <p><strong>Key insight:</strong> COP watchdog is essential - it's the <strong>only protection</strong> that works when:</p>
+                <ul>
+                    <li>All interrupts disabled (<code>TR_Disable_All_IRQs</code>)</li>
+                    <li>Thread monopolizes CPU (<code>TR_High_Priority_Thread</code>)</li>
+                    <li>Kernel is locked (<code>TR_osKernelLock</code>)</li>
+                </ul>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_COP_WATCHDOG  (1)</div>
+
+                <p><strong>Protection mechanism:</strong></p>
+                <p>The hardware watchdog runs independently and resets the system when threads cannot execute. All three thread-starvation faults are handled by this single mechanism.</p>
+
+                <p><strong>Recovery time:</strong> ~1024ms (watchdog timeout)</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 9.2, the COP watchdog successfully recovers from the fault. DIO 9 shows repeated HIGH periods followed by recovery. Threads stop during fault, then resume after each reset. System continuously recovers rather than staying permanently frozen.</p>
+    </div>
+
+    <!-- FAULT 10 -->
+    <div class="fault-section">
+        <h2>Fault Test 10: TR_osKernelLock (Extra Credit)</h2>
+        
+        <h3>Fault Analysis</h3>
+        
+        <table class="comparison-table">
+            <tr>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_osKernelLock\before_fault_no_protection.png" alt="Without Protection Waveform">
+                    <p><em>Figure 10.1. System freezes after kernel lock. DIO 9 toggles in infinite loop, all other threads stop permanently.</em></p>
+                </td>
+                <td>
+                    <img class="screenshot" src="C:\Users\siddh\OneDrive\Documents\Boards\NXP\FRDM-KL25Z\Project_Base\screenshots\Fault_TR_osKernelLock\after_fault_with_watchdog.png" alt="With COP Watchdog">
+                    <p><em>Figure 10.2. COP Watchdog resets system repeatedly. Clear recovery cycles visible every ~4 seconds.</em></p>
+                </td>
+            </tr>
+        </table>
+
+        <p>The fault locks the RTOS kernel and enters an infinite loop:</p>
+        <div class="code-box">case TR_osKernelLock:
+    osDelay(20000);  // 20 second delay before triggering fault
+    osKernelLock();
+    while (1)
+        DEBUG_TOGGLE(DBG_FAULT_POS);  // Infinite loop after locking kernel
+    break;</div>
+
+        <p>This is a <strong>scheduler starvation attack</strong>:</p>
+        <ul>
+            <li><code>osKernelLock()</code> prevents the RTOS scheduler from switching threads</li>
+            <li>The current thread (fault thread) runs exclusively</li>
+            <li>No other threads can execute, including <code>Thread_Update_Setpoint</code></li>
+            <li>The watchdog is not fed, and control stops</li>
+        </ul>
+
+        <h3>Fault Management Approach</h3>
+        
+        <div class="two-column-layout">
+            <div class="left-col">
+                <p>This fault is handled by the <strong>COP Watchdog Timer</strong> - the same mechanism used for <code>TR_Disable_All_IRQs</code> and <code>TR_High_Priority_Thread</code>.</p>
+
+                <ul>
+                    <li>COP watchdog runs on hardware, independent of RTOS scheduler</li>
+                    <li>When kernel is locked, <code>Thread_Update_Setpoint</code> cannot run to feed watchdog</li>
+                    <li>After ~1024ms timeout, COP triggers hardware reset</li>
+                    <li>System restarts in known-good state</li>
+                </ul>
+
+                <p><strong>Key insight:</strong> This demonstrates why COP watchdog is essential. Three different faults all prevent normal thread execution:</p>
+                <ul>
+                    <li><code>TR_Disable_All_IRQs</code> - disables interrupts</li>
+                    <li><code>TR_High_Priority_Thread</code> - monopolizes CPU</li>
+                    <li><code>TR_osKernelLock</code> - locks scheduler</li>
+                </ul>
+                <p>The hardware watchdog protects against all of them with a single mechanism.</p>
+            </div>
+            <div class="right-col">
+                <p><strong>config.h - Configuration Switch:</strong></p>
+                <div class="code-box">#define ENABLE_COP_WATCHDOG  (1)</div>
+
+                <p><strong>Protection mechanism:</strong></p>
+                <p>The hardware watchdog runs independently and resets the system when the kernel is locked and threads cannot execute.</p>
+
+                <p><strong>Recovery time:</strong> ~1024ms (watchdog timeout)</p>
+                <p><strong>Recovery cycles:</strong> Every ~4 seconds (20s initial delay only on first boot, then ~1s timeout + 2s delay)</p>
+            </div>
+        </div>
+
+        <h3>Evaluation of Effectiveness</h3>
+        <p>As shown in Figure 10.2, the COP watchdog successfully recovers from the fault. DIO 9 shows repeated toggle bursts followed by recovery. DIO 8, 7, 6 (threads) resume normal operation after each reset. LED current shows clear recovery cycles - system returns to normal PWM control.</p>
+    </div>
+
+    <!-- SUMMARY -->
+    <h1>Summary</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fault</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Protection Method</th>
+                <th>Recovery Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>TR_PID_FX_Gains</td>
+                <td>Shared Data</td>
+                <td>Corrupts PID integral gain to -1000</td>
+                <td>Range validation + restore defaults</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>TR_Disable_All_IRQs</td>
+                <td>Interrupts</td>
+                <td>Disables all interrupts via PRIMASK</td>
+                <td>COP Watchdog timer reset</td>
+                <td>~1024ms</td>
+            </tr>
+            <tr>
+                <td>TR_Disable_ADC_IRQ</td>
+                <td>Interrupts</td>
+                <td>Disables ADC interrupt only</td>
+                <td>Periodic re-enable (scrub)</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>TR_Setpoint_High</td>
+                <td>Shared Data</td>
+                <td>Sets current setpoint to 1000mA</td>
+                <td>Range clamping (0-300mA)</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>TR_Flash_Period</td>
+                <td>Shared Data</td>
+                <td>Sets flash period to 0ms</td>
+                <td>Range clamping (2-180ms)</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>TR_Slow_TPM</td>
+                <td>Hardware</td>
+                <td>Corrupts TPM0->MOD to 23456</td>
+                <td>Register scrubbing</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>TR_Disable_PeriphClocks</td>
+                <td>Hardware</td>
+                <td>Disables peripheral clocks (SCGC6=0)</td>
+                <td>Clock gate scrubbing</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>TR_Change_MCU_Clock</td>
+                <td>Hardware</td>
+                <td>Corrupts MCG->C5 to 0x0018</td>
+                <td>MCG register scrubbing</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>TR_High_Priority_Thread</td>
+                <td>RTOS</td>
+                <td>Raises priority to realtime + infinite loop</td>
+                <td>COP Watchdog timer reset</td>
+                <td>~1024ms</td>
+            </tr>
+            <tr>
+                <td>TR_osKernelLock</td>
+                <td>RTOS</td>
+                <td>Locks RTOS kernel + infinite loop</td>
+                <td>COP Watchdog timer reset</td>
+                <td>~1024ms</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Configuration Switches (config.h)</h3>
+    <div class="code-box">// Set to 1 to enable PID gain validation (protects against TR_PID_FX_Gains fault)
+#define ENABLE_PID_GAIN_VALIDATION  (1)
+
+// Set to 1 to enable COP Watchdog Timer (protects against TR_Disable_All_IRQs, TR_High_Priority_Thread, TR_osKernelLock)
+#define ENABLE_COP_WATCHDOG  (1)
+
+// Set to 1 to enable ADC IRQ scrubbing (protects against TR_Disable_ADC_IRQ fault)
+#define ENABLE_ADC_IRQ_SCRUB  (1)
+
+// Set to 1 to enable setpoint validation (protects against TR_Setpoint_High fault)
+#define ENABLE_SETPOINT_VALIDATION  (1)
+
+// Set to 1 to enable flash period validation (protects against TR_Flash_Period fault)
+#define ENABLE_FLASH_PERIOD_VALIDATION  (1)
+
+// Set to 1 to enable TPM scrubbing (protects against TR_Slow_TPM fault)
+#define ENABLE_TPM_SCRUB  (1)
+
+// Set to 1 to enable peripheral clock scrubbing (protects against TR_Disable_PeriphClocks fault)
+#define ENABLE_CLOCK_SCRUB  (1)
+
+// Set to 1 to enable MCU clock validation (protects against TR_Change_MCU_Clock fault)
+#define ENABLE_MCG_SCRUB  (1)</div>
+
+    <h3>Files Modified</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Changes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><code>config.h</code></td><td>Added all 8 protection enable switches (PID, COP, ADC_IRQ, SETPOINT, FLASH_PERIOD, TPM, CLOCK, MCG)</td></tr>
+            <tr><td><code>control.c</code></td><td>Added <code>Validate_PID_Gains()</code> function</td></tr>
+            <tr><td><code>control.h</code></td><td>Added function declaration and gain limit definitions</td></tr>
+            <tr><td><code>threads.c</code></td><td>Added calls to <code>WDT_Feed()</code>, <code>Validate_PID_Gains()</code>, <code>NVIC_EnableIRQ(ADC0_IRQn)</code>, setpoint clamping, flash period clamping, TPM0->MOD scrubbing, SCGC6 clock scrubbing, and MCG->C5 scrubbing</td></tr>
+            <tr><td><code>fault.c</code></td><td>Modified <code>TR_Flash_Period</code> fault to set period to 0</td></tr>
+            <tr><td><code>wdt.c</code></td><td>New file - COP watchdog implementation</td></tr>
+            <tr><td><code>wdt.h</code></td><td>New file - COP watchdog header</td></tr>
+            <tr><td><code>main.c</code></td><td>Added watchdog feeds during initialization</td></tr>
+            <tr><td><code>MMA8451.c</code></td><td>Added watchdog feeds during long delays</td></tr>
+            <tr><td><code>system_MKL25Z4.c</code></td><td>Modified to enable COP in SystemInit()</td></tr>
+            <tr><td><code>system_MKL25Z4.h</code></td><td>Added DISABLE_WDOG control based on config</td></tr>
+        </tbody>
+    </table>
+
+    <!-- RETROSPECTIVE SECTION -->
+    <h1>Retrospective</h1>
+
+    <h2>Lessons Learned</h2>
+    
+    <p><strong>The most important thing learned was the layered nature of fault protection - some faults can be caught with simple software checks, while others require hardware-level protection that runs independently of the software.</strong></p>
+
+    <ul>
+        <li><strong>Shared data corruption</strong> (like <code>g_set_current_mA</code>, <code>g_flash_period</code>, PID gains) can cause immediate system misbehavior, but is easily protected with simple range clamping (just 2 lines of code per variable)</li>
+        <li><strong>Hardware register corruption</strong> (TPM0->MOD, SIM->SCGC6, MCG->C5) requires periodic "scrubbing" - restoring known-good values every 1ms from the highest-priority application thread</li>
+        <li><strong>Interrupt-related faults</strong> vary in severity - a single disabled IRQ (<code>ADC0_IRQn</code>) can be re-enabled by software, but <code>__disable_irq()</code> completely kills the system and requires hardware protection</li>
+        <li><strong>RTOS scheduler attacks</strong> (high-priority thread takeover, kernel lock) prevent all other threads from running - only the COP watchdog can recover from these since it runs on hardware</li>
+        <li><strong>The COP watchdog is the last line of defense</strong> - it handles three different fault types (<code>TR_Disable_All_IRQs</code>, <code>TR_High_Priority_Thread</code>, <code>TR_osKernelLock</code>) with a single mechanism</li>
+    </ul>
+
+    <h2>Technical Issues</h2>
+
+    <h4>1. DIO 10 (PTE1) Doesn't Work as GPIO</h4>
+    <p>PTE1 is hardwired to OpenSDA UART1_RX on the FRDM-KL25Z board. We had to switch the fault trigger signal from DIO 10 to <strong>DIO 9 (PTE3)</strong>.</p>
+    <div class="code-box">// Solution in debug.h:
+#define DBG_FAULT_POS  DBG_9  // Changed from DBG_10 to DBG_9 (PTE3)</div>
+
+    <h4>2. Logic Analyzer Trigger Timing with System-Freezing Faults</h4>
+    <p>For <code>TR_Disable_All_IRQs</code>, using "Single" trigger mode caused the scope to get stuck on "Busy" because the system froze before the trigger could complete.</p>
+    <p><strong>Solution:</strong> Use "Run" mode instead of "Single" for faults that freeze the system.</p>
+
+    <h4>3. COP Watchdog Timeout Constraints</h4>
+    <p>Faster timeouts (32ms, 256ms) caused continuous resets because LCD initialization takes longer than the watchdog timeout. The system would reset before completing startup.</p>
+    <div class="code-box">// Solution: Use ~1024ms timeout (COPT=3) to allow initialization to complete:
+SIM->COPC = SIM_COPC_COPT(3);  // ~1 second timeout</div>
+
+    <h4>4. Fault Pulse Visibility on Scope</h4>
+    <p>The original 2ms fault pulse was invisible when zoomed out to see the full fault effect.</p>
+    <p><strong>Solution:</strong> Added delays before fault injection to make the trigger signal clearly visible on scope captures.</p>
+
+    <h4>5. Clock and MCG Scrubbing Order Matters</h4>
+    <p>When scrubbing hardware registers, the order of restoration matters. Clock gates (SCGC6) must be restored before peripheral registers that depend on those clocks.</p>
+    <div class="code-box">// Solution: Restore clocks first, then dependent peripherals:
+SIM->SCGC6 |= SIM_SCGC6_TPM0_MASK | SIM_SCGC6_ADC0_MASK | ...;  // Clocks first
+TPM0->MOD = TPM0_MOD_VALUE;  // Then peripheral registers</div>
+
+    <h2>Process Changes</h2>
+
+    <h4>1. Relied on Logic Analyzer Over Stepping Through Code</h4>
+    <p>Real-time faults can't be debugged with breakpoints since timing is critical. The scope/logic analyzer became the primary debugging tool for:</p>
+    <ul>
+        <li>Observing thread execution timing (DIO 6, 7, 8)</li>
+        <li>Capturing fault injection moments (DIO 9)</li>
+        <li>Seeing system behavior before/after faults</li>
+        <li>Verifying watchdog recovery cycles</li>
+    </ul>
+
+    <h4>2. Systematic Before/After Capture Workflow</h4>
+    <p>Developed a repeatable process for each fault:</p>
+    <ol>
+        <li>Disable protection (<code>ENABLE_xxx = 0</code>)</li>
+        <li>Rebuild and capture "BEFORE" screenshot</li>
+        <li>Enable protection (<code>ENABLE_xxx = 1</code>)</li>
+        <li>Rebuild and capture "AFTER" screenshot</li>
+        <li>Compare to verify protection effectiveness</li>
+    </ol>
+    <p>This was applied to all 10 documented faults, creating a comprehensive visual record.</p>
+
+    <h4>3. Centralized Validation in High-Priority Thread</h4>
+    <p>Rather than validating only at the point of use, we validate and scrub all protected resources every 1ms in <code>Thread_Update_Setpoint</code>. This catches corruption quickly regardless of where it originated:</p>
+    <div class="code-box">// All validations run every 1ms in Thread_Update_Setpoint
+WDT_Feed();                           // Feed watchdog
+Validate_PID_Gains();                 // PID corruption
+NVIC_EnableIRQ(ADC0_IRQn);            // ADC IRQ scrub
+TPM0->MOD = TPM0_MOD_VALUE;           // TPM scrub
+SIM->SCGC6 |= REQUIRED_CLOCKS;        // Clock gate scrub
+MCG->C5 = EXPECTED_MCG_C5;            // MCG scrub
+// Range clamping for setpoint, flash period</div>
+
+    <h4>4. Configuration Switches for All Protections</h4>
+    <p>Used <code>#if ENABLE_...</code> preprocessor switches for all 8 protection mechanisms. This made it easy to toggle protections on/off for testing without modifying actual protection code.</p>
+
+    <h4>5. Using Delays for Scope Synchronization</h4>
+    <p>For faults that freeze the system, added delays before triggering to give time for scope setup. For kernel lock testing, used a 20-second delay to allow scope configuration.</p>
+
+    <h2>Fault Categories and Protection Strategies</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Faults</th>
+                <th>Protection</th>
+                <th>Recovery Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Shared Data</td>
+                <td>TR_Setpoint_High, TR_Flash_Period, TR_PID_FX_Gains</td>
+                <td>Range validation/clamping</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>Single IRQ</td>
+                <td>TR_Disable_ADC_IRQ</td>
+                <td>Periodic re-enable</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>Hardware Registers</td>
+                <td>TR_Slow_TPM, TR_Disable_PeriphClocks, TR_Change_MCU_Clock</td>
+                <td>Register scrubbing</td>
+                <td>~1ms</td>
+            </tr>
+            <tr>
+                <td>System Hang</td>
+                <td>TR_Disable_All_IRQs, TR_High_Priority_Thread, TR_osKernelLock</td>
+                <td>COP Watchdog</td>
+                <td>~1024ms</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Key Takeaways</h2>
+    <ol>
+        <li><strong>Defense in depth works:</strong> Software scrubbing catches most faults in 1ms, hardware watchdog catches the rest in ~1 second</li>
+        <li><strong>Centralized validation is powerful:</strong> Running all checks from one high-priority thread ensures consistent protection regardless of fault source</li>
+        <li><strong>Hardware watchdog is essential:</strong> Three different RTOS/interrupt faults all prevent software from running - only hardware protection can save the system</li>
+        <li><strong>Simple solutions are often best:</strong> Most protections are just 1-3 lines of code, but they're highly effective</li>
+        <li><strong>Testability matters:</strong> Having configuration switches for each protection made systematic testing practical</li>
+    </ol>
+
+    <p><strong>Bottom line:</strong> A combination of periodic software scrubbing (for data and register corruption) plus hardware watchdog (for complete system hangs) provides comprehensive fault tolerance with minimal code complexity.</p>
+
+</body>
+</html>
